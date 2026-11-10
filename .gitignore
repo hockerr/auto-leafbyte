@@ -1,0 +1,20 @@
+# python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# fetched / generated data (reproducible, large)
+data/paper/images/
+data/fixtures/
+data/demo/
+
+# local scratch and virtualenvs
+out/tests/
+out/_test_review/
+out/review/
+.venv/
+venv/
+
+# upstream snapshot used only for local reference
+ext/
+dist/
