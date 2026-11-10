@@ -1,0 +1,31 @@
+﻿file,status,confidence,total_cm2,consumed_cm2,percent_consumed,threshold,scale_method,scale_px_length,flags,reason
+AI2.png,auto,0.9338,22.351,2.336,10.452,0.49,quad,760.0,,auto-accepted (confidence 0.93); no blocking quality issues
+CA1.png,auto,0.9701,9.666,0.0,0.0,0.475,quad,839.0,,auto-accepted (confidence 0.97); no blocking quality issues
+CO1.png,auto,0.9615,23.698,1.039,4.3858,0.49,quad,780.0,,auto-accepted (confidence 0.96); no blocking quality issues
+CO2.png,auto,0.9703,25.168,1.215,4.8292,0.498,quad,795.0,,auto-accepted (confidence 0.97); no blocking quality issues
+CO5.png,auto,0.9724,27.037,1.18,4.3653,0.518,quad,786.0,,auto-accepted (confidence 0.97); no blocking quality issues
+EA2.png,auto,0.9606,8.722,0.367,4.2068,0.486,quad,811.0,,auto-accepted (confidence 0.96); no blocking quality issues
+GB1.png,auto,0.9829,28.173,0.0,0.0,0.443,quad,725.0,,auto-accepted (confidence 0.98); no blocking quality issues
+GB2.png,auto,0.9833,50.189,4.839,9.6423,0.471,quad,749.0,,auto-accepted (confidence 0.98); no blocking quality issues
+GB4.png,auto,0.9693,14.964,2.901,19.3883,0.478,quad,745.0,,auto-accepted (confidence 0.97); no blocking quality issues
+GB5.png,auto,0.9766,17.475,3.123,17.8691,0.49,quad,796.0,,auto-accepted (confidence 0.98); no blocking quality issues
+GB6.png,auto,0.9769,21.933,6.114,27.8736,0.475,quad,761.0,,auto-accepted (confidence 0.98); no blocking quality issues
+IE1.png,done,0.9199,7.566,0.0,0.0,0.455,quad,783.0,,needs human review (confidence 0.92): confidence below auto-accept threshold
+MP5.png,auto,0.9608,45.613,1.964,4.3059,0.49,quad,813.0,,auto-accepted (confidence 0.96); no blocking quality issues
+OR2.png,auto,0.9601,51.843,1.388,2.6773,0.482,quad,763.0,,auto-accepted (confidence 0.96); no blocking quality issues
+PB2.png,auto,0.9697,53.172,2.186,4.1107,0.533,quad,782.0,,auto-accepted (confidence 0.97); no blocking quality issues
+SH2.png,done,0.55,9.858,0.436,4.4267,0.534,quad,709.0,area_unstable,needs human review (confidence 0.55): area unstable under +-threshold
+SH4.png,done,0.55,5.625,0.001,0.017,0.408,quad,778.0,tiny_hole_noise,needs human review (confidence 0.55): consumed area dominated by tiny speckle holes
+SH5.png,done,0.918,9.874,0.368,3.7229,0.525,quad,729.0,,needs human review (confidence 0.92): confidence below auto-accept threshold
+SP5.png,auto,0.9777,11.345,0.991,8.7351,0.49,quad,814.0,,auto-accepted (confidence 0.98); no blocking quality issues
+SS1.png,auto,0.9324,5.892,0.556,9.4333,0.471,quad,819.0,,auto-accepted (confidence 0.93); no blocking quality issues
+SS2.png,auto,0.9458,4.879,0.229,4.6907,0.525,quad,781.0,,auto-accepted (confidence 0.95); no blocking quality issues
+SS3.png,auto,0.9608,4.841,0.0,0.0,0.494,quad,786.0,,auto-accepted (confidence 0.96); no blocking quality issues
+SS4.png,auto,0.9496,6.413,0.839,13.0781,0.494,quad,814.0,,auto-accepted (confidence 0.95); no blocking quality issues
+TH3.png,auto,0.9604,25.655,2.43,9.4713,0.459,quad,754.0,,auto-accepted (confidence 0.96); no blocking quality issues
+TH4.png,done,0.55,39.352,0.0,0.0011,0.467,quad,803.0,tiny_hole_noise,needs human review (confidence 0.55): consumed area dominated by tiny speckle holes
+TH5.png,auto,0.9743,29.749,1.615,5.4281,0.506,quad,802.0,,auto-accepted (confidence 0.97); no blocking quality issues
+TM1.png,auto,0.9807,40.965,2.428,5.9274,0.518,quad,748.0,,auto-accepted (confidence 0.98); no blocking quality issues
+TM2.png,done,0.55,59.96,0.004,0.0062,0.518,quad,735.0,tiny_hole_noise,needs human review (confidence 0.55): consumed area dominated by tiny speckle holes
+TM4.png,auto,0.961,53.637,2.776,5.175,0.51,quad,720.0,,auto-accepted (confidence 0.96); no blocking quality issues
+TM5.png,auto,0.9603,42.305,3.213,7.5956,0.49,quad,765.0,,auto-accepted (confidence 0.96); no blocking quality issues

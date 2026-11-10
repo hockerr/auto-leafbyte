@@ -1,0 +1,252 @@
+{
+  "schema": "leafbyte.review.queue/1",
+  "generated_at": "2026-11-10T06:35:11",
+  "queue_id": "187ab9c78931",
+  "out_dir": "out\\demo",
+  "scale_cm": 17.0,
+  "count": 3,
+  "total_records": 3,
+  "items": [
+    {
+      "index": 1,
+      "file": "demo03_CO1_blurred.png",
+      "status": "review",
+      "image": "originals/000_demo03_CO1_blurred.jpg",
+      "overlay": "../overlays/demo03_CO1_blurred_original.jpg",
+      "overlay_original": "../overlays/demo03_CO1_blurred_original.jpg",
+      "overlay_rectified": null,
+      "threshold": 0.533333,
+      "total_cm2": null,
+      "consumed_cm2": null,
+      "percent_consumed": 0.0,
+      "confidence": 0.55,
+      "scale_found": false,
+      "scale_method": "none",
+      "scale_quality": 0.0,
+      "flags": [
+        "scale_not_found",
+        "relative_only"
+      ],
+      "reason": "needs human review (confidence 0.55): relative measurement only (no scale); needs a human; scale not found; absolute area unavailable",
+      "error": null,
+      "candidates": [
+        {
+          "index": 1,
+          "candidate_id": "t0",
+          "threshold": 0.493333,
+          "total_cm2": null,
+          "consumed_cm2": null,
+          "percent_consumed": 0.0,
+          "selected": false,
+          "overlay": "../overlays/candidates/demo03_CO1_blurred__t0.jpg",
+          "error": null
+        },
+        {
+          "index": 2,
+          "candidate_id": "t1",
+          "threshold": 0.513333,
+          "total_cm2": null,
+          "consumed_cm2": null,
+          "percent_consumed": 0.0,
+          "selected": false,
+          "overlay": "../overlays/candidates/demo03_CO1_blurred__t1.jpg",
+          "error": null
+        },
+        {
+          "index": 3,
+          "candidate_id": "t2",
+          "threshold": 0.533333,
+          "total_cm2": null,
+          "consumed_cm2": null,
+          "percent_consumed": 0.0,
+          "selected": true,
+          "overlay": "../overlays/candidates/demo03_CO1_blurred__t2.jpg",
+          "error": null
+        },
+        {
+          "index": 4,
+          "candidate_id": "t3",
+          "threshold": 0.553333,
+          "total_cm2": null,
+          "consumed_cm2": null,
+          "percent_consumed": 0.0,
+          "selected": false,
+          "overlay": "../overlays/candidates/demo03_CO1_blurred__t3.jpg",
+          "error": null
+        },
+        {
+          "index": 5,
+          "candidate_id": "t4",
+          "threshold": 0.573333,
+          "total_cm2": null,
+          "consumed_cm2": null,
+          "percent_consumed": 0.0,
+          "selected": false,
+          "overlay": "../overlays/candidates/demo03_CO1_blurred__t4.jpg",
+          "error": null
+        }
+      ],
+      "default_selected": 3
+    },
+    {
+      "index": 2,
+      "file": "demo04_SH2_glare.png",
+      "status": "review",
+      "image": "originals/001_demo04_SH2_glare.jpg",
+      "overlay": "../overlays/demo04_SH2_glare_rectified.jpg",
+      "overlay_original": "../overlays/demo04_SH2_glare_original.jpg",
+      "overlay_rectified": "../overlays/demo04_SH2_glare_rectified.jpg",
+      "threshold": 0.498039,
+      "total_cm2": 9.5626,
+      "consumed_cm2": 0.209845,
+      "percent_consumed": 2.19443,
+      "confidence": 0.55,
+      "scale_found": true,
+      "scale_method": "quad",
+      "scale_quality": 0.971887,
+      "flags": [
+        "area_unstable"
+      ],
+      "reason": "needs human review (confidence 0.55): area unstable under +-threshold",
+      "error": null,
+      "candidates": [
+        {
+          "index": 1,
+          "candidate_id": "t0",
+          "threshold": 0.458039,
+          "total_cm2": 9.48326,
+          "consumed_cm2": 0.217894,
+          "percent_consumed": 2.29767,
+          "selected": false,
+          "overlay": "../overlays/candidates/demo04_SH2_glare__t0.jpg",
+          "error": null
+        },
+        {
+          "index": 2,
+          "candidate_id": "t1",
+          "threshold": 0.478039,
+          "total_cm2": 9.52063,
+          "consumed_cm2": 0.215019,
+          "percent_consumed": 2.25845,
+          "selected": false,
+          "overlay": "../overlays/candidates/demo04_SH2_glare__t1.jpg",
+          "error": null
+        },
+        {
+          "index": 3,
+          "candidate_id": "t2",
+          "threshold": 0.498039,
+          "total_cm2": 9.5626,
+          "consumed_cm2": 0.209845,
+          "percent_consumed": 2.19443,
+          "selected": true,
+          "overlay": "../overlays/candidates/demo04_SH2_glare__t2.jpg",
+          "error": null
+        },
+        {
+          "index": 4,
+          "candidate_id": "t3",
+          "threshold": 0.518039,
+          "total_cm2": 9.83856,
+          "consumed_cm2": 0.442111,
+          "percent_consumed": 4.49366,
+          "selected": false,
+          "overlay": "../overlays/candidates/demo04_SH2_glare__t3.jpg",
+          "error": null
+        },
+        {
+          "index": 5,
+          "candidate_id": "t4",
+          "threshold": 0.538039,
+          "total_cm2": 9.86328,
+          "consumed_cm2": 0.433488,
+          "percent_consumed": 4.39496,
+          "selected": false,
+          "overlay": "../overlays/candidates/demo04_SH2_glare__t4.jpg",
+          "error": null
+        }
+      ],
+      "default_selected": 3
+    },
+    {
+      "index": 3,
+      "file": "demo05_CO1_fractured.png",
+      "status": "review",
+      "image": "originals/002_demo05_CO1_fractured.jpg",
+      "overlay": "../overlays/demo05_CO1_fractured_rectified.jpg",
+      "overlay_original": "../overlays/demo05_CO1_fractured_original.jpg",
+      "overlay_rectified": "../overlays/demo05_CO1_fractured_rectified.jpg",
+      "threshold": 0.498039,
+      "total_cm2": 12.225,
+      "consumed_cm2": 0.381438,
+      "percent_consumed": 3.12014,
+      "confidence": 0.55,
+      "scale_found": true,
+      "scale_method": "quad",
+      "scale_quality": 0.978069,
+      "flags": [
+        "competing_leaf"
+      ],
+      "reason": "needs human review (confidence 0.55): another large component competes with the leaf",
+      "error": null,
+      "candidates": [
+        {
+          "index": 1,
+          "candidate_id": "t0",
+          "threshold": 0.458039,
+          "total_cm2": 12.1994,
+          "consumed_cm2": 0.387613,
+          "percent_consumed": 3.17732,
+          "selected": false,
+          "overlay": "../overlays/candidates/demo05_CO1_fractured__t0.jpg",
+          "error": null
+        },
+        {
+          "index": 2,
+          "candidate_id": "t1",
+          "threshold": 0.478039,
+          "total_cm2": 12.2112,
+          "consumed_cm2": 0.385238,
+          "percent_consumed": 3.15478,
+          "selected": false,
+          "overlay": "../overlays/candidates/demo05_CO1_fractured__t1.jpg",
+          "error": null
+        },
+        {
+          "index": 3,
+          "candidate_id": "t2",
+          "threshold": 0.498039,
+          "total_cm2": 12.225,
+          "consumed_cm2": 0.381438,
+          "percent_consumed": 3.12014,
+          "selected": true,
+          "overlay": "../overlays/candidates/demo05_CO1_fractured__t2.jpg",
+          "error": null
+        },
+        {
+          "index": 4,
+          "candidate_id": "t3",
+          "threshold": 0.518039,
+          "total_cm2": 12.2426,
+          "consumed_cm2": 0.377638,
+          "percent_consumed": 3.08462,
+          "selected": false,
+          "overlay": "../overlays/candidates/demo05_CO1_fractured__t3.jpg",
+          "error": null
+        },
+        {
+          "index": 5,
+          "candidate_id": "t4",
+          "threshold": 0.538039,
+          "total_cm2": 12.2564,
+          "consumed_cm2": 0.375738,
+          "percent_consumed": 3.06565,
+          "selected": false,
+          "overlay": "../overlays/candidates/demo05_CO1_fractured__t4.jpg",
+          "error": null
+        }
+      ],
+      "default_selected": 3
+    }
+  ]
+}

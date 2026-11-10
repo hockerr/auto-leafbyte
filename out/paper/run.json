@@ -1,0 +1,333 @@
+{
+  "generated_at": "2026-11-10T06:46:15",
+  "image_dir": "data\\paper\\images",
+  "out_dir": "out\\paper",
+  "config": {
+    "max_dim": 1200,
+    "background": "white",
+    "threshold": null,
+    "candidate_deltas": [
+      -0.04,
+      -0.02,
+      0.0,
+      0.02,
+      0.04
+    ],
+    "stability_deltas": [
+      -0.02,
+      0.02
+    ],
+    "scale_cm": 17.0,
+    "scale_mode": "quad",
+    "scale_mark_min_px": 19,
+    "scale_mark_max_px": 50000,
+    "scale_mark_max_aspect": 2.5,
+    "tiny_hole_px": 25,
+    "hole_min_px": 1,
+    "auto_accept_min": 0.92,
+    "review_min": 0.45,
+    "stability_tolerance": 0.02,
+    "reference_tolerance_cm2": 0.05,
+    "review_candidates": 5,
+    "overlay_max_px": 900,
+    "extra": {}
+  },
+  "ground_truth": "data\\paper\\ground_truth.csv",
+  "summary": {
+    "images": 30,
+    "auto": 24,
+    "review": 6,
+    "failed": 0,
+    "done": 0,
+    "rejected": 0,
+    "auto_rate": 0.8,
+    "mean_confidence": 0.9063,
+    "mean_percent_consumed": 6.3199,
+    "total_time_s": 9.52
+  },
+  "accuracy": {
+    "compared": 29,
+    "auto_compared": 23,
+    "auto_within_tolerance": 23,
+    "false_auto_accept": 0,
+    "max_abs_error_total_cm2": 0.4111,
+    "mean_abs_error_total_cm2": 0.13144,
+    "per_file": {
+      "AI2.png": {
+        "total_cm2": 22.565,
+        "consumed_cm2": 2.279,
+        "reference_status": "app_test_disabled",
+        "error_total_cm2": -0.214032,
+        "error_consumed_cm2": 0.057117,
+        "rel_error_total": -0.009485,
+        "within_tolerance": true
+      },
+      "CA1.png": {
+        "total_cm2": 9.791,
+        "consumed_cm2": 0.0,
+        "reference_status": "app_test_disabled",
+        "error_total_cm2": -0.125246,
+        "error_consumed_cm2": 0.0,
+        "rel_error_total": -0.012792,
+        "within_tolerance": true
+      },
+      "CO1.png": {
+        "total_cm2": 23.951,
+        "consumed_cm2": 0.992,
+        "reference_status": "app_test",
+        "error_total_cm2": -0.25338,
+        "error_consumed_cm2": 0.047336,
+        "rel_error_total": -0.010579,
+        "within_tolerance": true
+      },
+      "CO2.png": {
+        "total_cm2": 25.231,
+        "consumed_cm2": 1.154,
+        "reference_status": "app_test",
+        "error_total_cm2": -0.063388,
+        "error_consumed_cm2": 0.061398,
+        "rel_error_total": -0.002512,
+        "within_tolerance": true
+      },
+      "CO5.png": {
+        "total_cm2": 27.016,
+        "consumed_cm2": 1.176,
+        "reference_status": "app_test",
+        "error_total_cm2": 0.020972,
+        "error_consumed_cm2": 0.004239,
+        "rel_error_total": 0.000776,
+        "within_tolerance": true
+      },
+      "GB1.png": {
+        "total_cm2": 28.366,
+        "consumed_cm2": 0.0,
+        "reference_status": "app_test",
+        "error_total_cm2": -0.193139,
+        "error_consumed_cm2": 0.0,
+        "rel_error_total": -0.006809,
+        "within_tolerance": true
+      },
+      "GB2.png": {
+        "total_cm2": 50.448,
+        "consumed_cm2": 4.731,
+        "reference_status": "app_test",
+        "error_total_cm2": -0.259453,
+        "error_consumed_cm2": 0.108325,
+        "rel_error_total": -0.005143,
+        "within_tolerance": true
+      },
+      "GB4.png": {
+        "total_cm2": 14.953,
+        "consumed_cm2": 2.901,
+        "reference_status": "app_test",
+        "error_total_cm2": 0.011319,
+        "error_consumed_cm2": 0.000325,
+        "rel_error_total": 0.000757,
+        "within_tolerance": true
+      },
+      "GB5.png": {
+        "total_cm2": 17.474,
+        "consumed_cm2": 3.126,
+        "reference_status": "app_test",
+        "error_total_cm2": 0.000571,
+        "error_consumed_cm2": -0.003456,
+        "rel_error_total": 3.3e-05,
+        "within_tolerance": true
+      },
+      "GB6.png": {
+        "total_cm2": 22.048,
+        "consumed_cm2": 6.008,
+        "reference_status": "app_test",
+        "error_total_cm2": -0.114539,
+        "error_consumed_cm2": 0.105643,
+        "rel_error_total": -0.005195,
+        "within_tolerance": true
+      },
+      "IE1.png": {
+        "total_cm2": 7.57,
+        "consumed_cm2": 0.0,
+        "reference_status": "app_test_disabled",
+        "error_total_cm2": -0.00382,
+        "error_consumed_cm2": 0.0,
+        "rel_error_total": -0.000505,
+        "within_tolerance": true
+      },
+      "MP5.png": {
+        "total_cm2": 45.924,
+        "consumed_cm2": 1.889,
+        "reference_status": "app_test",
+        "error_total_cm2": -0.311015,
+        "error_consumed_cm2": 0.075068,
+        "rel_error_total": -0.006772,
+        "within_tolerance": true
+      },
+      "OR2.png": {
+        "total_cm2": 52.046,
+        "consumed_cm2": 1.318,
+        "reference_status": "app_test",
+        "error_total_cm2": -0.20343,
+        "error_consumed_cm2": 0.069989,
+        "rel_error_total": -0.003909,
+        "within_tolerance": true
+      },
+      "PB2.png": {
+        "total_cm2": 53.341,
+        "consumed_cm2": 2.096,
+        "reference_status": "app_test_disabled",
+        "error_total_cm2": -0.168977,
+        "error_consumed_cm2": 0.089728,
+        "rel_error_total": -0.003168,
+        "within_tolerance": true
+      },
+      "SH2.png": {
+        "total_cm2": 9.936,
+        "consumed_cm2": 0.424,
+        "reference_status": "app_test",
+        "error_total_cm2": -0.07847,
+        "error_consumed_cm2": 0.012362,
+        "rel_error_total": -0.007898,
+        "within_tolerance": true
+      },
+      "SH4.png": {
+        "total_cm2": 5.733,
+        "consumed_cm2": 0.002,
+        "reference_status": "app_test",
+        "error_total_cm2": -0.10802,
+        "error_consumed_cm2": -0.001045,
+        "rel_error_total": -0.018842,
+        "within_tolerance": false
+      },
+      "SH5.png": {
+        "total_cm2": 10.136,
+        "consumed_cm2": 0.354,
+        "reference_status": "app_test",
+        "error_total_cm2": -0.2616,
+        "error_consumed_cm2": 0.013612,
+        "rel_error_total": -0.025809,
+        "within_tolerance": false
+      },
+      "SP5.png": {
+        "total_cm2": 11.411,
+        "consumed_cm2": 0.967,
+        "reference_status": "app_test_disabled",
+        "error_total_cm2": -0.066395,
+        "error_consumed_cm2": 0.023963,
+        "rel_error_total": -0.005819,
+        "within_tolerance": true
+      },
+      "SS1.png": {
+        "total_cm2": 5.898,
+        "consumed_cm2": 0.538,
+        "reference_status": "app_test_disabled",
+        "error_total_cm2": -0.006073,
+        "error_consumed_cm2": 0.017802,
+        "rel_error_total": -0.00103,
+        "within_tolerance": true
+      },
+      "SS2.png": {
+        "total_cm2": 4.92,
+        "consumed_cm2": 0.208,
+        "reference_status": "app_test_disabled",
+        "error_total_cm2": -0.041273,
+        "error_consumed_cm2": 0.020846,
+        "rel_error_total": -0.008389,
+        "within_tolerance": true
+      },
+      "SS3.png": {
+        "total_cm2": 4.853,
+        "consumed_cm2": 0.0,
+        "reference_status": "app_test",
+        "error_total_cm2": -0.012289,
+        "error_consumed_cm2": 0.0,
+        "rel_error_total": -0.002532,
+        "within_tolerance": true
+      },
+      "SS4.png": {
+        "total_cm2": 6.502,
+        "consumed_cm2": 0.815,
+        "reference_status": "app_test",
+        "error_total_cm2": -0.088656,
+        "error_consumed_cm2": 0.023742,
+        "rel_error_total": -0.013635,
+        "within_tolerance": true
+      },
+      "TH3.png": {
+        "total_cm2": 25.632,
+        "consumed_cm2": 2.422,
+        "reference_status": "app_test",
+        "error_total_cm2": 0.022954,
+        "error_consumed_cm2": 0.00787,
+        "rel_error_total": 0.000896,
+        "within_tolerance": true
+      },
+      "TH4.png": {
+        "total_cm2": 39.763,
+        "consumed_cm2": 0.001,
+        "reference_status": "app_test_disabled",
+        "error_total_cm2": -0.4111,
+        "error_consumed_cm2": -0.000552,
+        "rel_error_total": -0.010339,
+        "within_tolerance": true
+      },
+      "TH5.png": {
+        "total_cm2": 30.008,
+        "consumed_cm2": 1.56,
+        "reference_status": "app_test",
+        "error_total_cm2": -0.258529,
+        "error_consumed_cm2": 0.054831,
+        "rel_error_total": -0.008615,
+        "within_tolerance": true
+      },
+      "TM1.png": {
+        "total_cm2": 41.1,
+        "consumed_cm2": 2.351,
+        "reference_status": "app_test",
+        "error_total_cm2": -0.134607,
+        "error_consumed_cm2": 0.077202,
+        "rel_error_total": -0.003275,
+        "within_tolerance": true
+      },
+      "TM2.png": {
+        "total_cm2": 60.034,
+        "consumed_cm2": 0.002,
+        "reference_status": "app_test",
+        "error_total_cm2": -0.0744,
+        "error_consumed_cm2": 0.001745,
+        "rel_error_total": -0.001239,
+        "within_tolerance": true
+      },
+      "TM4.png": {
+        "total_cm2": 53.855,
+        "consumed_cm2": 2.678,
+        "reference_status": "app_test",
+        "error_total_cm2": -0.218295,
+        "error_consumed_cm2": 0.097716,
+        "rel_error_total": -0.004053,
+        "within_tolerance": true
+      },
+      "TM5.png": {
+        "total_cm2": 42.391,
+        "consumed_cm2": 3.125,
+        "reference_status": "app_test_disabled",
+        "error_total_cm2": -0.085815,
+        "error_consumed_cm2": 0.088333,
+        "rel_error_total": -0.002024,
+        "within_tolerance": true
+      }
+    },
+    "auto_mean_abs_error_total_cm2": 0.124972,
+    "auto_max_abs_error_total_cm2": 0.311015
+  },
+  "elapsed_s": 10.84,
+  "files": {
+    "jsonl": "out\\paper\\results.jsonl",
+    "csv": "out\\paper\\results.csv"
+  },
+  "review": {
+    "reviewed_at": "decisions.json",
+    "reviewer": "reviewer-01",
+    "decisions": 6,
+    "human_accepted": 6,
+    "rejected": 0
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "generated_at": "2026-11-10T06:35:10",
+  "image_dir": "data\\demo",
+  "out_dir": "out\\demo",
+  "config": {
+    "max_dim": 1200,
+    "background": "white",
+    "threshold": null,
+    "candidate_deltas": [
+      -0.04,
+      -0.02,
+      0.0,
+      0.02,
+      0.04
+    ],
+    "stability_deltas": [
+      -0.02,
+      0.02
+    ],
+    "scale_cm": 17.0,
+    "scale_mode": "quad",
+    "scale_mark_min_px": 19,
+    "scale_mark_max_px": 50000,
+    "scale_mark_max_aspect": 2.5,
+    "tiny_hole_px": 25,
+    "hole_min_px": 1,
+    "auto_accept_min": 0.92,
+    "review_min": 0.45,
+    "stability_tolerance": 0.02,
+    "reference_tolerance_cm2": 0.05,
+    "review_candidates": 5,
+    "overlay_max_px": 900,
+    "extra": {}
+  },
+  "summary": {
+    "images": 6,
+    "auto": 3,
+    "review": 3,
+    "failed": 0,
+    "done": 0,
+    "rejected": 0,
+    "auto_rate": 0.5,
+    "mean_confidence": 0.7551,
+    "mean_percent_consumed": 5.5806,
+    "total_time_s": 1.83
+  },
+  "accuracy": null,
+  "elapsed_s": 2.6,
+  "files": {
+    "jsonl": "out\\demo\\results.jsonl",
+    "csv": "out\\demo\\results.csv"
+  }
+}

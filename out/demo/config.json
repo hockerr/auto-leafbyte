@@ -1,0 +1,30 @@
+{
+  "max_dim": 1200,
+  "background": "white",
+  "threshold": null,
+  "candidate_deltas": [
+    -0.04,
+    -0.02,
+    0.0,
+    0.02,
+    0.04
+  ],
+  "stability_deltas": [
+    -0.02,
+    0.02
+  ],
+  "scale_cm": 17.0,
+  "scale_mode": "quad",
+  "scale_mark_min_px": 19,
+  "scale_mark_max_px": 50000,
+  "scale_mark_max_aspect": 2.5,
+  "tiny_hole_px": 25,
+  "hole_min_px": 1,
+  "auto_accept_min": 0.92,
+  "review_min": 0.45,
+  "stability_tolerance": 0.02,
+  "reference_tolerance_cm2": 0.05,
+  "review_candidates": 5,
+  "overlay_max_px": 900,
+  "extra": {}
+}

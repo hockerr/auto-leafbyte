@@ -1,0 +1,7 @@
+﻿file,status,confidence,total_cm2,consumed_cm2,percent_consumed,threshold,scale_method,scale_px_length,flags,reason
+demo01_CO1_clean.png,auto,0.9615,23.698,1.039,4.3858,0.49,quad,780.0,,auto-accepted (confidence 0.96); no blocking quality issues
+demo02_GB4_clean.png,auto,0.9693,14.964,2.901,19.3883,0.478,quad,745.0,,auto-accepted (confidence 0.97); no blocking quality issues
+demo03_CO1_blurred.png,rejected,0.55,,,,0.533,none,,scale_not_found; relative_only,needs human review (confidence 0.55): relative measurement only (no scale); needs a human; scale not found; absolute area unavailable
+demo04_SH2_glare.png,done,0.55,9.563,0.21,2.1944,0.498,quad,709.0,area_unstable,needs human review (confidence 0.55): area unstable under +-threshold
+demo05_CO1_fractured.png,done,0.55,23.5,1.02,4.3404,0.498,quad,780.0,competing_leaf,needs human review (confidence 0.55): another large component competes with the leaf
+demo06_CO1_dark.png,auto,0.9496,23.692,1.041,4.3948,0.267,quad,780.0,,auto-accepted (confidence 0.95); no blocking quality issues

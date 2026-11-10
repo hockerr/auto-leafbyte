@@ -1,0 +1,9 @@
+{
+  "reviewer": "示例审核员",
+  "reviewed_at": "2026-11-10T06:40:00",
+  "decisions": {
+    "demo03_CO1_blurred.png": {"action": "reject", "note": "失焦，比例尺点糊掉，需重拍"},
+    "demo04_SH2_glare.png": {"action": "accept", "candidate_id": "t2", "threshold": 0.49, "total_cm2": 9.5526, "consumed_cm2": 0.21, "note": "接受当前阈值结果"},
+    "demo05_CO1_fractured.png": {"action": "override", "total_cm2": 23.5, "consumed_cm2": 1.02, "note": "撕裂处手工补量（ImageJ）"}
+  }
+}

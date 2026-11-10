@@ -1,0 +1,487 @@
+{
+  "schema": "leafbyte.review.queue/1",
+  "generated_at": "2026-11-10T06:46:15",
+  "queue_id": "f46a6491c394",
+  "out_dir": "out\\paper",
+  "scale_cm": 17.0,
+  "count": 6,
+  "total_records": 6,
+  "items": [
+    {
+      "index": 1,
+      "file": "IE1.png",
+      "status": "review",
+      "image": "originals/000_IE1.jpg",
+      "overlay": "../overlays/IE1_rectified.jpg",
+      "overlay_original": "../overlays/IE1_original.jpg",
+      "overlay_rectified": "../overlays/IE1_rectified.jpg",
+      "threshold": 0.454902,
+      "total_cm2": 7.56618,
+      "consumed_cm2": 0.0,
+      "percent_consumed": 0.0,
+      "confidence": 0.919885,
+      "scale_found": true,
+      "scale_method": "quad",
+      "scale_quality": 0.975496,
+      "flags": [],
+      "reason": "needs human review (confidence 0.92): confidence below auto-accept threshold",
+      "error": null,
+      "candidates": [
+        {
+          "index": 1,
+          "candidate_id": "t0",
+          "threshold": 0.414902,
+          "total_cm2": 7.46671,
+          "consumed_cm2": 0.0,
+          "percent_consumed": 0.0,
+          "selected": false,
+          "overlay": "../overlays/candidates/IE1__t0.jpg",
+          "error": null
+        },
+        {
+          "index": 2,
+          "candidate_id": "t1",
+          "threshold": 0.434902,
+          "total_cm2": 7.51574,
+          "consumed_cm2": 0.0,
+          "percent_consumed": 0.0,
+          "selected": false,
+          "overlay": "../overlays/candidates/IE1__t1.jpg",
+          "error": null
+        },
+        {
+          "index": 3,
+          "candidate_id": "t2",
+          "threshold": 0.454902,
+          "total_cm2": 7.56618,
+          "consumed_cm2": 0.0,
+          "percent_consumed": 0.0,
+          "selected": true,
+          "overlay": "../overlays/candidates/IE1__t2.jpg",
+          "error": null
+        },
+        {
+          "index": 4,
+          "candidate_id": "t3",
+          "threshold": 0.474902,
+          "total_cm2": 7.6053,
+          "consumed_cm2": 0.0,
+          "percent_consumed": 0.0,
+          "selected": false,
+          "overlay": "../overlays/candidates/IE1__t3.jpg",
+          "error": null
+        },
+        {
+          "index": 5,
+          "candidate_id": "t4",
+          "threshold": 0.494902,
+          "total_cm2": 7.64065,
+          "consumed_cm2": 0.0,
+          "percent_consumed": 0.0,
+          "selected": false,
+          "overlay": "../overlays/candidates/IE1__t4.jpg",
+          "error": null
+        }
+      ],
+      "default_selected": 3
+    },
+    {
+      "index": 2,
+      "file": "SH2.png",
+      "status": "review",
+      "image": "originals/001_SH2.jpg",
+      "overlay": "../overlays/SH2_rectified.jpg",
+      "overlay_original": "../overlays/SH2_original.jpg",
+      "overlay_rectified": "../overlays/SH2_rectified.jpg",
+      "threshold": 0.494118,
+      "total_cm2": 9.55225,
+      "consumed_cm2": 0.210995,
+      "percent_consumed": 2.20885,
+      "confidence": 0.55,
+      "scale_found": true,
+      "scale_method": "quad",
+      "scale_quality": 0.97216,
+      "flags": [
+        "area_unstable"
+      ],
+      "reason": "needs human review (confidence 0.55): area unstable under +-threshold",
+      "error": null,
+      "candidates": [
+        {
+          "index": 1,
+          "candidate_id": "t0",
+          "threshold": 0.454118,
+          "total_cm2": 9.47464,
+          "consumed_cm2": 0.218469,
+          "percent_consumed": 2.30583,
+          "selected": false,
+          "overlay": "../overlays/candidates/SH2__t0.jpg",
+          "error": null
+        },
+        {
+          "index": 2,
+          "candidate_id": "t1",
+          "threshold": 0.474118,
+          "total_cm2": 9.51373,
+          "consumed_cm2": 0.216744,
+          "percent_consumed": 2.27822,
+          "selected": false,
+          "overlay": "../overlays/candidates/SH2__t1.jpg",
+          "error": null
+        },
+        {
+          "index": 3,
+          "candidate_id": "t2",
+          "threshold": 0.494118,
+          "total_cm2": 9.55225,
+          "consumed_cm2": 0.210995,
+          "percent_consumed": 2.20885,
+          "selected": true,
+          "overlay": "../overlays/candidates/SH2__t2.jpg",
+          "error": null
+        },
+        {
+          "index": 4,
+          "candidate_id": "t3",
+          "threshold": 0.514118,
+          "total_cm2": 9.82994,
+          "consumed_cm2": 0.444411,
+          "percent_consumed": 4.521,
+          "selected": false,
+          "overlay": "../overlays/candidates/SH2__t3.jpg",
+          "error": null
+        },
+        {
+          "index": 5,
+          "candidate_id": "t4",
+          "threshold": 0.534118,
+          "total_cm2": 9.85753,
+          "consumed_cm2": 0.436362,
+          "percent_consumed": 4.42669,
+          "selected": false,
+          "overlay": "../overlays/candidates/SH2__t4.jpg",
+          "error": null
+        }
+      ],
+      "default_selected": 3
+    },
+    {
+      "index": 3,
+      "file": "SH4.png",
+      "status": "review",
+      "image": "originals/002_SH4.jpg",
+      "overlay": "../overlays/SH4_rectified.jpg",
+      "overlay_original": "../overlays/SH4_original.jpg",
+      "overlay_rectified": "../overlays/SH4_rectified.jpg",
+      "threshold": 0.407843,
+      "total_cm2": 5.62498,
+      "consumed_cm2": 0.000955,
+      "percent_consumed": 0.016976,
+      "confidence": 0.55,
+      "scale_found": true,
+      "scale_method": "quad",
+      "scale_quality": 0.995229,
+      "flags": [
+        "tiny_hole_noise"
+      ],
+      "reason": "needs human review (confidence 0.55): consumed area dominated by tiny speckle holes",
+      "error": null,
+      "candidates": [
+        {
+          "index": 1,
+          "candidate_id": "t0",
+          "threshold": 0.367843,
+          "total_cm2": 5.57341,
+          "consumed_cm2": 0.000477,
+          "percent_consumed": 0.008567,
+          "selected": false,
+          "overlay": "../overlays/candidates/SH4__t0.jpg",
+          "error": null
+        },
+        {
+          "index": 2,
+          "candidate_id": "t1",
+          "threshold": 0.387843,
+          "total_cm2": 5.60206,
+          "consumed_cm2": 0.000477,
+          "percent_consumed": 0.008523,
+          "selected": false,
+          "overlay": "../overlays/candidates/SH4__t1.jpg",
+          "error": null
+        },
+        {
+          "index": 3,
+          "candidate_id": "t2",
+          "threshold": 0.407843,
+          "total_cm2": 5.62498,
+          "consumed_cm2": 0.000955,
+          "percent_consumed": 0.016976,
+          "selected": true,
+          "overlay": "../overlays/candidates/SH4__t2.jpg",
+          "error": null
+        },
+        {
+          "index": 4,
+          "candidate_id": "t3",
+          "threshold": 0.427843,
+          "total_cm2": 5.64599,
+          "consumed_cm2": 0.00191,
+          "percent_consumed": 0.033827,
+          "selected": false,
+          "overlay": "../overlays/candidates/SH4__t3.jpg",
+          "error": null
+        },
+        {
+          "index": 5,
+          "candidate_id": "t4",
+          "threshold": 0.447843,
+          "total_cm2": 5.66747,
+          "consumed_cm2": 0.000955,
+          "percent_consumed": 0.016849,
+          "selected": false,
+          "overlay": "../overlays/candidates/SH4__t4.jpg",
+          "error": null
+        }
+      ],
+      "default_selected": 3
+    },
+    {
+      "index": 4,
+      "file": "SH5.png",
+      "status": "review",
+      "image": "originals/003_SH5.jpg",
+      "overlay": "../overlays/SH5_rectified.jpg",
+      "overlay_original": "../overlays/SH5_original.jpg",
+      "overlay_rectified": "../overlays/SH5_rectified.jpg",
+      "threshold": 0.52549,
+      "total_cm2": 9.8744,
+      "consumed_cm2": 0.367612,
+      "percent_consumed": 3.72288,
+      "confidence": 0.918033,
+      "scale_found": true,
+      "scale_method": "quad",
+      "scale_quality": 0.978058,
+      "flags": [],
+      "reason": "needs human review (confidence 0.92): confidence below auto-accept threshold",
+      "error": null,
+      "candidates": [
+        {
+          "index": 1,
+          "candidate_id": "t0",
+          "threshold": 0.48549,
+          "total_cm2": 9.7912,
+          "consumed_cm2": 0.376857,
+          "percent_consumed": 3.84893,
+          "selected": false,
+          "overlay": "../overlays/candidates/SH5__t0.jpg",
+          "error": null
+        },
+        {
+          "index": 2,
+          "candidate_id": "t1",
+          "threshold": 0.50549,
+          "total_cm2": 9.83362,
+          "consumed_cm2": 0.371962,
+          "percent_consumed": 3.78256,
+          "selected": false,
+          "overlay": "../overlays/candidates/SH5__t1.jpg",
+          "error": null
+        },
+        {
+          "index": 3,
+          "candidate_id": "t2",
+          "threshold": 0.52549,
+          "total_cm2": 9.8744,
+          "consumed_cm2": 0.367612,
+          "percent_consumed": 3.72288,
+          "selected": true,
+          "overlay": "../overlays/candidates/SH5__t2.jpg",
+          "error": null
+        },
+        {
+          "index": 4,
+          "candidate_id": "t3",
+          "threshold": 0.54549,
+          "total_cm2": 9.92933,
+          "consumed_cm2": 0.361086,
+          "percent_consumed": 3.63656,
+          "selected": false,
+          "overlay": "../overlays/candidates/SH5__t3.jpg",
+          "error": null
+        },
+        {
+          "index": 5,
+          "candidate_id": "t4",
+          "threshold": 0.56549,
+          "total_cm2": 9.98262,
+          "consumed_cm2": 0.354017,
+          "percent_consumed": 3.54633,
+          "selected": false,
+          "overlay": "../overlays/candidates/SH5__t4.jpg",
+          "error": null
+        }
+      ],
+      "default_selected": 3
+    },
+    {
+      "index": 5,
+      "file": "TH4.png",
+      "status": "review",
+      "image": "originals/004_TH4.jpg",
+      "overlay": "../overlays/TH4_rectified.jpg",
+      "overlay_original": "../overlays/TH4_original.jpg",
+      "overlay_rectified": "../overlays/TH4_rectified.jpg",
+      "threshold": 0.466667,
+      "total_cm2": 39.3519,
+      "consumed_cm2": 0.000448,
+      "percent_consumed": 0.001139,
+      "confidence": 0.55,
+      "scale_found": true,
+      "scale_method": "quad",
+      "scale_quality": 0.982689,
+      "flags": [
+        "tiny_hole_noise"
+      ],
+      "reason": "needs human review (confidence 0.55): consumed area dominated by tiny speckle holes",
+      "error": null,
+      "candidates": [
+        {
+          "index": 1,
+          "candidate_id": "t0",
+          "threshold": 0.426667,
+          "total_cm2": 39.1798,
+          "consumed_cm2": 0.0,
+          "percent_consumed": 0.0,
+          "selected": false,
+          "overlay": "../overlays/candidates/TH4__t0.jpg",
+          "error": null
+        },
+        {
+          "index": 2,
+          "candidate_id": "t1",
+          "threshold": 0.446667,
+          "total_cm2": 39.2699,
+          "consumed_cm2": 0.0,
+          "percent_consumed": 0.0,
+          "selected": false,
+          "overlay": "../overlays/candidates/TH4__t1.jpg",
+          "error": null
+        },
+        {
+          "index": 3,
+          "candidate_id": "t2",
+          "threshold": 0.466667,
+          "total_cm2": 39.3519,
+          "consumed_cm2": 0.000448,
+          "percent_consumed": 0.001139,
+          "selected": true,
+          "overlay": "../overlays/candidates/TH4__t2.jpg",
+          "error": null
+        },
+        {
+          "index": 4,
+          "candidate_id": "t3",
+          "threshold": 0.486667,
+          "total_cm2": 39.434,
+          "consumed_cm2": 0.0,
+          "percent_consumed": 0.0,
+          "selected": false,
+          "overlay": "../overlays/candidates/TH4__t3.jpg",
+          "error": null
+        },
+        {
+          "index": 5,
+          "candidate_id": "t4",
+          "threshold": 0.506667,
+          "total_cm2": 39.5102,
+          "consumed_cm2": 0.0,
+          "percent_consumed": 0.0,
+          "selected": false,
+          "overlay": "../overlays/candidates/TH4__t4.jpg",
+          "error": null
+        }
+      ],
+      "default_selected": 3
+    },
+    {
+      "index": 6,
+      "file": "TM2.png",
+      "status": "review",
+      "image": "originals/005_TM2.jpg",
+      "overlay": "../overlays/TM2_rectified.jpg",
+      "overlay_original": "../overlays/TM2_original.jpg",
+      "overlay_rectified": "../overlays/TM2_rectified.jpg",
+      "threshold": 0.517647,
+      "total_cm2": 59.9596,
+      "consumed_cm2": 0.003745,
+      "percent_consumed": 0.006245,
+      "confidence": 0.55,
+      "scale_found": true,
+      "scale_method": "quad",
+      "scale_quality": 0.976415,
+      "flags": [
+        "tiny_hole_noise"
+      ],
+      "reason": "needs human review (confidence 0.55): consumed area dominated by tiny speckle holes",
+      "error": null,
+      "candidates": [
+        {
+          "index": 1,
+          "candidate_id": "t0",
+          "threshold": 0.477647,
+          "total_cm2": 59.866,
+          "consumed_cm2": 0.00428,
+          "percent_consumed": 0.007149,
+          "selected": false,
+          "overlay": "../overlays/candidates/TM2__t0.jpg",
+          "error": null
+        },
+        {
+          "index": 2,
+          "candidate_id": "t1",
+          "threshold": 0.497647,
+          "total_cm2": 59.9147,
+          "consumed_cm2": 0.00428,
+          "percent_consumed": 0.007143,
+          "selected": false,
+          "overlay": "../overlays/candidates/TM2__t1.jpg",
+          "error": null
+        },
+        {
+          "index": 3,
+          "candidate_id": "t2",
+          "threshold": 0.517647,
+          "total_cm2": 59.9596,
+          "consumed_cm2": 0.003745,
+          "percent_consumed": 0.006245,
+          "selected": true,
+          "overlay": "../overlays/candidates/TM2__t2.jpg",
+          "error": null
+        },
+        {
+          "index": 4,
+          "candidate_id": "t3",
+          "threshold": 0.537647,
+          "total_cm2": 60.011,
+          "consumed_cm2": 0.00321,
+          "percent_consumed": 0.005349,
+          "selected": false,
+          "overlay": "../overlays/candidates/TM2__t3.jpg",
+          "error": null
+        },
+        {
+          "index": 5,
+          "candidate_id": "t4",
+          "threshold": 0.557647,
+          "total_cm2": 60.0549,
+          "consumed_cm2": 0.002675,
+          "percent_consumed": 0.004454,
+          "selected": false,
+          "overlay": "../overlays/candidates/TM2__t4.jpg",
+          "error": null
+        }
+      ],
+      "default_selected": 3
+    }
+  ]
+}
