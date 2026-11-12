@@ -1,5 +1,7 @@
 # auto-leafbyte
 
+[![CI](https://github.com/hockerr/auto-leafbyte/actions/workflows/ci.yml/badge.svg)](https://github.com/hockerr/auto-leafbyte/actions/workflows/ci.yml)
+
 把 [LeafByte](https://github.com/TheBeruriahIncident/leafbyte)（手机 App，测叶片被啃食面积）的
 计算核心移植成**可批处理的 Python 流水线**，并实现了你真正需要的那件事：
 
@@ -251,6 +253,24 @@ PYTHONPATH=src "$PY" -m unittest discover -s tests -t . -v
 - 想接你们的 LIMS/表格：`results.jsonl` 是稳定 schema，`batch.attach_reference` 已经演示了如何按真值算误差。
 
 ---
+
+## 8.5 持续集成（GitHub Actions）
+
+`.github/workflows/ci.yml` 在每次 push / PR 上跑（Python 3.11、3.12、3.13 各一份）：
+
+1. 安装 `numpy / pillow / openpyxl`；
+2. 缓存并下载上游 LeafByte 论文照片（`tools/fetch_paper_data.py`，约 57 MB，key 按脚本内容哈希）；
+3. **198 个单元/集成测试**；
+4. 论文 30 张照片全流程跑一遍；
+5. **精度闸门**（`tools/ci_check_accuracy.py`）：失败样本 0、自动接受样本没有任何一个超出 1.5% 容差、
+   自动接受数量 ≥20、待审核数量 ≤10、平均误差 ≤0.20 cm²、单张最大误差 ≤0.45 cm²；
+6. 生成汇总表并上传结果（`results.csv` / `leaf_traits.csv` / `run.json` / xlsx）作为 artifact。
+
+任何一条不满足，CI 直接红。想在本机跑同样的检查：
+
+```bash
+PYTHONPATH=src python tools/ci_check_accuracy.py --run out/paper
+```
 
 ## 9. 许可与出处
 
