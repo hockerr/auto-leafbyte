@@ -445,6 +445,9 @@ _CJK_FONT_CANDIDATES = (
     "C:/Windows/Fonts/simsun.ttc",
     "/System/Library/Fonts/PingFang.ttc",
     "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc:0",
+    "/usr/share/fonts/OFL/noto/NotoSansCJK-Regular.ttc",
 )
 _CJK_FONT_CACHE: dict[int, object] = {}
 

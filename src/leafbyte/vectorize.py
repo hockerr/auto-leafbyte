@@ -350,9 +350,20 @@ def _pdf_escape(text: str) -> str:
     return str(text).replace("\\", r"\\").replace("(", r"\(").replace(")", r"\)")
 
 
+def ascii_label(text: str) -> str:
+    """Latin/digit-only version of a sample label (for fonts without CJK)."""
+    cleaned = "".join(char for char in str(text) if ord(char) < 128).strip()
+    cleaned = " ".join(cleaned.split())
+    return cleaned or "sample"
+
+
 def _label_bitmap(text: str, height_px: int = 90):
-    """Render the sample label (may contain CJK) to a grayscale PIL image."""
-    from PIL import Image, ImageDraw
+    """Render the sample label (may contain CJK) to a grayscale PIL image.
+
+    Returns ``None`` only when the text needs a CJK font that is not installed;
+    ASCII labels fall back to Pillow's built-in bitmap font.
+    """
+    from PIL import Image, ImageDraw, ImageFont
 
     try:
         from leafbyte.imageops import load_cjk_font
@@ -360,7 +371,12 @@ def _label_bitmap(text: str, height_px: int = 90):
     except Exception:  # noqa: BLE001
         font = None
     if font is None:
-        return None
+        if any(ord(char) > 127 for char in str(text)):
+            return None
+        try:
+            font = ImageFont.load_default(size=height_px)
+        except TypeError:  # very old Pillow
+            font = ImageFont.load_default()
     probe = ImageDraw.Draw(Image.new("L", (8, 8), 255))
     try:
         box = probe.textbbox((0, 0), text, font=font)
@@ -601,8 +617,8 @@ def contour_pdf(
                 height_pt = 1.02 * _CM_TO_PT
                 width_pt = height_pt * bitmap.size[0] / max(bitmap.size[1], 1)
                 pdf.image(bitmap, margin, 1.45 * _CM_TO_PT, width_pt, height_pt)
-            else:  # pragma: no cover - only without a CJK font
-                pdf.text(margin, 1.45 * _CM_TO_PT, font_pt, label)
+            else:  # no CJK font installed: render an ASCII label as vector text
+                pdf.text(margin, 1.45 * _CM_TO_PT, font_pt, ascii_label(label))
     return pdf.to_bytes()
 
 
@@ -672,7 +688,13 @@ def contour_plate_png(
         draw.text((margin + bar_len + 0.55 * px_per_cm, bar_y + bar_h + 0.15 * px_per_cm),
                   "cm", fill=(30, 30, 30), font=small_font)
         if label:
-            draw.text((margin, size + 0.55 * px_per_cm), label, fill=(20, 20, 20), font=label_font)
+            try:
+                draw.text((margin, size + 0.55 * px_per_cm), label,
+                          fill=(20, 20, 20), font=label_font)
+            except (UnicodeEncodeError, OSError):
+                # no CJK glyphs in this environment: fall back to an ASCII label
+                draw.text((margin, size + 0.55 * px_per_cm), ascii_label(label),
+                          fill=(20, 20, 20))
 
     if max_width_px and image.width > max_width_px:
         ratio = max_width_px / image.width

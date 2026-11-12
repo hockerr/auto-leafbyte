@@ -137,8 +137,10 @@ class AnnotationTest(unittest.TestCase):
         self.assertIn('height="17.0000cm"', svg)
 
     def test_pdf_is_structurally_valid(self) -> None:
+        # ASCII label: no CJK font needed, so this test also runs on a bare
+        # Linux runner (the image XObject is still exercised)
         data = vectorize.contour_pdf(self.contours, size=200, scale_cm=17.0,
-                                     label="140盐肤木-1")
+                                     label="sample-1")
         self.assertTrue(data.startswith(b"%PDF-1.4"))
         self.assertTrue(data.rstrip().endswith(b"%%EOF"))
         self.assertIn(b"/MediaBox", data)
@@ -157,7 +159,7 @@ class AnnotationTest(unittest.TestCase):
     def test_pdf_cross_references_point_at_the_right_objects(self) -> None:
         """Regression: an off-by-one used to point /F1 at the content stream."""
         data = vectorize.contour_pdf(self.contours, size=200, scale_cm=17.0,
-                                     label="140盐肤木-1")
+                                     label="sample-1")
         self.assertEqual([], vectorize.verify_pdf_bytes(data))
         # the page resources must reference a Type1 font and an image XObject
         font_ref = int(re.search(rb"/Font << /F1 (\d+) 0 R >>", data).group(1))

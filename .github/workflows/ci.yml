@@ -43,6 +43,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
+      - name: Install a CJK font (Python 3.12 only, exercises Chinese figure labels)
+        if: matrix.python-version == '3.12'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk
+
       - name: Cache upstream test photographs
         uses: actions/cache@v4
         with:
