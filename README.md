@@ -17,7 +17,11 @@ python -m leafbyte run 图片文件夹 --out out/结果夹 --scale-cm 17
 
 ## 1. 5 分钟上手
 
-需要 Python 3.10+，只依赖 `numpy` 和 `Pillow`（无 cv2/scipy，不联网运行）。
+需要 Python 3.10+，依赖见 `requirements.txt`（numpy / Pillow / 可选 openpyxl；无 cv2/scipy）：
+
+```bash
+python -m pip install -r requirements.txt
+```
 
 ```bash
 export PYTHONPATH=src

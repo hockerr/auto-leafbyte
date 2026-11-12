@@ -1,0 +1,7 @@
+# Runtime dependencies of auto-leafbyte (only these three).
+#   numpy      - all image maths
+#   Pillow     - image IO / resampling / overlays
+#   openpyxl   - the Excel summary workbook (optional: the CSV is always written)
+numpy>=1.24
+Pillow>=10.0
+openpyxl>=3.1
