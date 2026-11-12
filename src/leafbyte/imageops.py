@@ -204,6 +204,94 @@ def threshold_diagnostics(img: np.ndarray, threshold: float, band: float = 0.02)
 
 
 # --------------------------------------------------------------------------
+# colour segmentation (for photos that do not have a white paper background)
+# --------------------------------------------------------------------------
+def exg(img: np.ndarray) -> np.ndarray:
+    """Excess-green index ``2G - R - B`` in ``[-255, 255]`` (float64).
+
+    Green leaf tissue is positive, neutral/grey paper and black scale dots are
+    near zero or negative.  This separates a leaf from a *grey* background far
+    more reliably than a global luma threshold, which slices through the
+    background's own intensity range when the paper is not white.
+    """
+    arr = np.asarray(img, dtype=np.float64)
+    if arr.ndim == 2:
+        return np.zeros(arr.shape, dtype=np.float64)
+    return 2.0 * arr[..., 1] - arr[..., 0] - arr[..., 2]
+
+
+def exg_histogram(img: np.ndarray) -> np.ndarray:
+    """256-bin histogram of the excess-green index mapped to ``0..255``.
+
+    ``ExG`` is ``-255..255``; ``(ExG + 255) / 2`` puts it in the same 8-bit range
+    as luma so the shared Otsu / bimodality helpers can be reused.
+    """
+    values = exg(img)  # careful: do not shadow the function name
+    mapped = np.clip(np.rint((values + 255.0) * 0.5), 0, 255).astype(np.int64)
+    return np.bincount(mapped.ravel(), minlength=HISTOGRAM_BUCKETS).astype(np.int64)
+
+
+def exg_threshold(img: np.ndarray) -> float:
+    """Adaptive ExG cut in ExG units (``-255..255``).
+
+    Otsu's cut sits at the *upper edge* of the empty valley when the leaf is a
+    bright minority (the criterion is flat inside the gap and the tie-break
+    takes the largest index), which erodes the leaf's fringe.  So the cut is
+    refined to the midpoint between the two class means - the middle of the
+    valley - where the measured area is least sensitive to the exact value.
+    """
+    hist = exg_histogram(img).astype(np.float64)
+    total = float(hist.sum())
+    if total <= 0.0:
+        return 0.0
+    cut = int(round(otsu_threshold(hist) * (HISTOGRAM_BUCKETS - 1)))
+    cut = int(np.clip(cut, 0, HISTOGRAM_BUCKETS - 2))
+    indexes = np.arange(HISTOGRAM_BUCKETS, dtype=np.float64)
+    low = indexes <= cut
+    low_weight = float(hist[low].sum())
+    high_weight = float(hist[~low].sum())
+    if low_weight <= 0.0 or high_weight <= 0.0:
+        return float(cut * 2.0 - 255.0)
+    low_mean = float((indexes[low] * hist[low]).sum()) / low_weight
+    high_mean = float((indexes[~low] * hist[~low]).sum()) / high_weight
+    midpoint = 0.5 * (low_mean + high_mean)
+    return float(np.clip(midpoint * 2.0 - 255.0, -255.0, 255.0))
+
+
+def _shift_or(mask: np.ndarray, radius: int) -> np.ndarray:
+    out = mask.copy()
+    for _ in range(radius):
+        grown = out.copy()
+        grown[1:, :] |= out[:-1, :]
+        grown[:-1, :] |= out[1:, :]
+        grown[:, 1:] |= out[:, :-1]
+        grown[:, :-1] |= out[:, 1:]
+        out = grown
+    return out
+
+
+def _shift_and(mask: np.ndarray, radius: int) -> np.ndarray:
+    out = mask.copy()
+    for _ in range(radius):
+        shrunk = out.copy()
+        shrunk[1:, :] &= out[:-1, :]
+        shrunk[:-1, :] &= out[1:, :]
+        shrunk[:, 1:] &= out[:, :-1]
+        shrunk[:, :-1] &= out[:, 1:]
+        out = shrunk
+    return out
+
+
+def close_mask(mask: np.ndarray, radius: int = 2) -> np.ndarray:
+    """Binary closing: bridge thin gaps (leaf veins, JPEG speckle) without growing area."""
+    mask = np.asarray(mask, dtype=bool)
+    radius = int(radius)
+    if radius <= 0:
+        return mask
+    return _shift_and(_shift_or(mask, radius), radius)
+
+
+# --------------------------------------------------------------------------
 # perspective warping
 # --------------------------------------------------------------------------
 def homography_from_quad(quad, size: int) -> np.ndarray:
@@ -272,11 +360,21 @@ def warp_quad(img: np.ndarray, quad, size: int) -> np.ndarray:
     denom[denom == 0] = 1e-12
     xs = (H[0, 0] * uu + H[0, 1] * vv + H[0, 2]) / denom
     ys = (H[1, 0] * uu + H[1, 1] * vv + H[1, 2]) / denom
-    # Clamp instead of masking: outside pixels are rare after rectification and
-    # sampling the border keeps the mask deterministic.
+    # Pixels that fall outside the source image (the corner triangles left by the
+    # perspective correction) are filled with paper-white instead of clamping to
+    # the photo border: clamping drags dark frame pixels in, which then look like
+    # leaf/dot pixels and leave 1-2 px specks in the mask.
+    inside = (xs >= 0.0) & (xs <= img.shape[1] - 1.0) & (ys >= 0.0) & (ys <= img.shape[0] - 1.0)
     xs = np.clip(xs, 0.0, img.shape[1] - 1.0)
     ys = np.clip(ys, 0.0, img.shape[0] - 1.0)
     out = _bilinear_sample(img, xs, ys)
+    if not inside.all():
+        out = np.asarray(out, dtype=np.float64)
+        fill = 255.0 if out.ndim == 3 else 1.0
+        if out.ndim == 3:
+            out[~inside] = 255.0
+        else:
+            out[~inside] = 1.0
     return np.clip(np.rint(out), 0, 255).astype(np.uint8)
 
 
@@ -338,6 +436,79 @@ def render_overlay(
         ratio = max_size / max(w, h)
         out = out.resize((max(1, int(w * ratio)), max(1, int(h * ratio))), Image.Resampling.LANCZOS)
     return out
+
+
+_CJK_FONT_CANDIDATES = (
+    "C:/Windows/Fonts/msyh.ttc",
+    "C:/Windows/Fonts/msyhbd.ttc",
+    "C:/Windows/Fonts/simhei.ttf",
+    "C:/Windows/Fonts/simsun.ttc",
+    "/System/Library/Fonts/PingFang.ttc",
+    "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+)
+_CJK_FONT_CACHE: dict[int, object] = {}
+
+
+def load_cjk_font(size: int = 16):
+    """Best-effort CJK TrueType font; ``None`` falls back to PIL's bitmap font."""
+    if size in _CJK_FONT_CACHE:
+        return _CJK_FONT_CACHE[size]
+    font = None
+    try:
+        from PIL import ImageFont
+
+        for candidate in _CJK_FONT_CANDIDATES:
+            if Path(candidate).exists():
+                try:
+                    font = ImageFont.truetype(candidate, size)
+                    break
+                except OSError:
+                    continue
+    except Exception:  # noqa: BLE001 - a missing font must never break a run
+        font = None
+    _CJK_FONT_CACHE[size] = font
+    return font
+
+
+def histogram_figure(histogram, cut_index: int, width: int = 880, height: int = 320,
+                     title: str = "", channel: str = "value",
+                     cut_label: str = "") -> Image.Image:
+    """Draw a 256-bin histogram with the threshold marked (review/archival figure).
+
+    Values are square-root scaled so both the huge background peak and the small
+    foreground peak stay visible.
+    """
+    import numpy as np
+    from PIL import ImageDraw
+
+    image = Image.new("RGB", (width, height), (255, 255, 255))
+    draw = ImageDraw.Draw(image)
+    font = load_cjk_font(17)
+    small = load_cjk_font(14)
+    hist = np.asarray(histogram, dtype=np.float64).ravel()
+    if hist.size == 0 or hist.max() <= 0:
+        draw.text((8, 8), "empty histogram", fill=(0, 0, 0), font=font)
+        return image
+    scaled = np.sqrt(hist / hist.max())
+    bins = scaled.size
+    plot_height = height - 46
+    for index, value in enumerate(scaled):
+        x0 = int(index * width / bins)
+        x1 = max(int((index + 1) * width / bins), x0 + 1)
+        y0 = int(height - 26 - value * plot_height)
+        draw.rectangle([x0, y0, x1, height - 26], fill=(130, 130, 130))
+    cut_index = int(np.clip(cut_index, 0, bins - 1))
+    x = int(cut_index * (width - 1) / max(bins - 1, 1))
+    draw.line([(x, 0), (x, height - 26)], fill=(220, 30, 30), width=3)
+    draw.rectangle([0, height - 26, width - 1, height - 1], outline=(200, 200, 200))
+    for fraction in (0.0, 0.5, 1.0):
+        position = int(fraction * (width - 1))
+        draw.text((min(position, width - 70), height - 20), f"bin {int(fraction * (bins - 1))}",
+                  fill=(90, 90, 90), font=small)
+    draw.text((6, 6), title or f"{channel} histogram", fill=(0, 0, 0), font=font)
+    draw.text((min(x + 8, max(width - 210, 0)), 6),
+              cut_label or f"阈值 = bin {cut_index}", fill=(220, 30, 30), font=font)
+    return image
 
 
 def save_png_bytes(image: Image.Image, quality: int = 85) -> bytes:

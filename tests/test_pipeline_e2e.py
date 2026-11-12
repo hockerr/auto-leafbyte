@@ -150,6 +150,40 @@ class BatchRunTest(unittest.TestCase):
             self.assertAlmostEqual(24.0, overridden["total_cm2"])
             self.assertTrue(str(overridden.get("source", "")).startswith("review"))
 
+    def test_threshold_figures_are_saved(self) -> None:
+        """`--save-figures` (default on) archives mask + histogram/threshold figure."""
+        from PIL import Image
+
+        work = scratch_dir("figures")
+        image_dir = work / "images"
+        image_dir.mkdir()
+        (image_dir / "GB4.png").write_bytes((PAPER / "GB4.png").read_bytes())
+        out_dir = work / "out"
+
+        batch.run_batch(image_dir, out_dir, cfg=Config(), save_figures=True, progress=None)
+
+        figures = sorted((out_dir / "figures").glob("*_threshold.png"))
+        masks = sorted((out_dir / "figures").glob("*_mask.png"))
+        self.assertEqual(1, len(figures))
+        self.assertEqual(1, len(masks))
+
+        record = batch.load_records(out_dir)[0]
+        self.assertTrue(record["figure_threshold"].endswith("_threshold.png"))
+        self.assertTrue(record["figure_mask"].endswith("_mask.png"))
+
+        with Image.open(out_dir / record["figure_threshold"]) as figure:
+            self.assertGreater(figure.width, 600)
+            self.assertGreater(figure.height, 600)
+        with Image.open(out_dir / record["figure_mask"]) as mask:
+            self.assertEqual("L", mask.mode)
+            values = set(mask.getdata())
+            self.assertTrue(values.issubset({0, 255}), "mask must be binary")
+
+        # and the flag can be turned off
+        quiet_dir = work / "out_quiet"
+        batch.run_batch(image_dir, quiet_dir, cfg=Config(), save_figures=False, progress=None)
+        self.assertFalse((quiet_dir / "figures").exists())
+
     def test_cli_reports(self) -> None:
         work = scratch_dir("cli")
         image_dir = work / "images"

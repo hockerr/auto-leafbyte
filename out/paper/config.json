@@ -1,6 +1,24 @@
 {
   "max_dim": 1200,
   "background": "white",
+  "leaf_mode": "auto",
+  "color_threshold": null,
+  "color_probe_competing_ratio": 0.05,
+  "color_threshold_range": [
+    6.0,
+    40.0
+  ],
+  "hole_validate_background": true,
+  "hole_dark_ratio": 0.55,
+  "mask_closing": 2,
+  "color_stability_delta": 4.0,
+  "color_stability_tolerance": 0.035,
+  "dot_thresholds": [
+    0.2,
+    0.15,
+    0.25,
+    0.3
+  ],
   "threshold": null,
   "candidate_deltas": [
     -0.04,

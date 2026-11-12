@@ -334,6 +334,9 @@ def _metric_scale(record: dict, cfg) -> tuple[float, list[str], dict]:
     score = _clip(quality)
     if method == "quad_relaxed":
         score *= 0.9
+    elif method in {"quad_dark", "quad_3dot"}:
+        # found with a fallback path (absolute darkness / inferred corner)
+        score *= 0.90 if method == "quad_dark" else 0.75
     return _clip(score), [], detail
 
 
@@ -388,8 +391,17 @@ def _metric_threshold(record: dict, cfg) -> tuple[float, list[str], dict]:
     return MISSING_EVIDENCE, [], detail
 
 
+def _stability_tolerance(record: dict, cfg) -> float:
+    """Area stability budget: the colour path has a softer edge than white paper."""
+    segmentation = record.get("segmentation")
+    mode = str((segmentation or {}).get("mode") or "luma") if isinstance(segmentation, dict) else "luma"
+    if mode == "color":
+        return float(_cfg(cfg, "color_stability_tolerance", 0.035) or 0.035)
+    return float(_cfg(cfg, "stability_tolerance", 0.02) or 0.02)
+
+
 def _metric_stability(record: dict, cfg) -> tuple[float, list[str], dict]:
-    tolerance = float(_cfg(cfg, "stability_tolerance", 0.02) or 0.02)
+    tolerance = _stability_tolerance(record, cfg)
     rel_range = None
     stability = record.get("stability")
     if isinstance(stability, dict):
@@ -594,7 +606,7 @@ def _gate(record: dict, cfg, metrics: dict,
 
     if _bool(details.get("leaf_border_touch", {}).get("touches")):
         reviewers.append("leaf_touches_border")
-    tolerance = float(_cfg(cfg, "stability_tolerance", 0.02) or 0.02)
+    tolerance = _stability_tolerance(record, cfg)
     rel_range = _num(details.get("stability", {}).get("rel_range"))
     if rel_range is not None and rel_range > tolerance * STABILITY_REVIEW_FACTOR:
         reviewers.append("area_unstable")

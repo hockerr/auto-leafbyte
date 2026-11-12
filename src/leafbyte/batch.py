@@ -24,7 +24,7 @@ from typing import Any, Callable, Iterable
 
 import numpy as np
 
-from . import imageops, measure, quality, review, scale
+from . import imageops, measure, quality, review, scale, traits, vectorize
 from .config import Config
 from .types import BACKGROUND_LABEL, MeasureResult
 
@@ -85,6 +85,26 @@ def _relative(path: Path, root: Path) -> str:
         return path.as_posix()
 
 
+def colour_threshold_metrics(img: np.ndarray, cut: float, band: float = 5.0) -> dict:
+    """Threshold diagnostics computed on the excess-green channel.
+
+    Same shape as :func:`imageops.threshold_diagnostics`, so the quality model
+    can treat a colour segmentation exactly like a luma one: ExG is mapped to
+    0..255 for the shared histogram helpers, and ``near_threshold_fraction``
+    counts pixels sitting on the ExG fence.
+    """
+    exg = imageops.exg(img)
+    histogram = imageops.exg_histogram(img)
+    cut_index = int(np.clip(round((cut + 255.0) * 0.5), 0, imageops.HISTOGRAM_BUCKETS - 1))
+    return {
+        "separation": float(imageops.histogram_separation(histogram, cut_index)),
+        "bimodality": float(imageops.histogram_bimodality(histogram, cut_index)),
+        "near_threshold_fraction": float(np.mean(np.abs(exg - cut) < band)),
+        "histogram": [int(value) for value in histogram],
+        "cut_index": cut_index,
+    }
+
+
 def _masks(analysis) -> tuple[np.ndarray | None, np.ndarray | None]:
     """Leaf mask and consumed-hole mask out of a ``measure.MeasureAnalysis``."""
     components = getattr(analysis, "components", None)
@@ -97,6 +117,162 @@ def _masks(analysis) -> tuple[np.ndarray | None, np.ndarray | None]:
     for hole in result.holes:
         hole_mask |= label_map == hole["label"]
     return leaf_mask, hole_mask
+
+
+def _sample_label(filename: str) -> str:
+    """Short human label for figures: ``Herbivory Data 140盐肤木-1 (2026-...)`` -> ``140盐肤木-1``."""
+    stem = Path(filename).stem
+    core = stem.split("(")[0].strip() or stem
+    for prefix in ("Herbivory Data ", "Herbivory Data", "Herbivory"):
+        if core.lower().startswith(prefix.lower().strip()):
+            core = core[len(prefix):].strip()
+            break
+    return core or stem
+
+
+def _erode(mask: np.ndarray) -> np.ndarray:
+    """4-connected one-pixel erosion (used to draw the boundary contour)."""
+    eroded = np.asarray(mask, dtype=bool).copy()
+    eroded[1:, :] &= mask[:-1, :]
+    eroded[:-1, :] &= mask[1:, :]
+    eroded[:, 1:] &= mask[:, :-1]
+    eroded[:, :-1] &= mask[:, 1:]
+    return eroded
+
+
+def write_threshold_figure(record: dict[str, Any], out_dir: str | Path, cfg: Config,
+                           export_pdf: bool = False) -> dict:
+    """Save the segmentation evidence for archival.
+
+    Writes into ``<out>/figures/``:
+
+    * ``<stem>_mask.png``      - binary leaf mask at full rectified resolution
+                                 (white = measured leaf, black = background)
+    * ``<stem>_threshold.png`` - side-by-side original / mask plus the histogram
+                                 with the threshold line and its value
+
+    Returns the two paths (relative to ``out_dir``) for the record.
+    """
+    from PIL import Image, ImageDraw
+
+    out_dir = Path(out_dir)
+    figure_dir = out_dir / "figures"
+    figure_dir.mkdir(parents=True, exist_ok=True)
+    stem = Path(record["file"]).stem
+
+    analysis = record.get("_analysis")
+    rectified = record.get("_rectified")
+    if analysis is None:
+        return {"figure_mask": None, "figure_threshold": None}
+
+    mask = np.asarray(analysis.mask, dtype=bool)
+    mask_image = Image.fromarray((mask.astype(np.uint8) * 255), mode="L")
+    mask_path = figure_dir / f"{stem}_mask.png"
+    mask_image.save(mask_path)
+
+    mode = str(getattr(analysis, "mode", "luma"))
+    if mode == "color" and getattr(analysis, "color_threshold", None) is not None:
+        histogram = imageops.exg_histogram(rectified.image) if rectified is not None else None
+        cut = float(analysis.color_threshold)
+        cut_index = int(round((cut + 255.0) * 0.5))
+        title = f"过绿指数 ExG = 2G−R−B 直方图（背景在左、叶片在右）"
+        cut_label = f"阈值 = {cut:.1f}"
+        channel = "ExG"
+    else:
+        histogram = np.asarray(analysis.histogram if analysis.histogram is not None
+                               else imageops.luma_histogram(
+                                   imageops.luma(rectified.image if rectified is not None
+                                                 else analysis.mask.astype(np.uint8) * 255)),
+                               dtype=np.int64)
+        cut_index = int(round(float(analysis.threshold) * (imageops.HISTOGRAM_BUCKETS - 1)))
+        title = f"亮度 luma 直方图（背景在右、叶片在左）"
+        cut_label = f"阈值 = {float(analysis.threshold):.3f}"
+        channel = "luma"
+
+    panel = 420
+    canvas = Image.new("RGB", (2 * panel + 30, panel + 400), (255, 255, 255))
+    draw = ImageDraw.Draw(canvas)
+    source = rectified.image if rectified is not None else np.zeros((panel, panel, 3), np.uint8)
+
+    # left: rectified image with the extracted boundary drawn as a thin line, so
+    # the edge reads as a contour instead of a staircase of binary pixels
+    outlined = Image.fromarray(source).convert("RGB")
+    contour_field = getattr(analysis, "contour_field", None)
+    contours = []
+    if contour_field is not None:
+        try:
+            contours = vectorize.marching_squares(contour_field,
+                                                  getattr(analysis, "contour_level", 0.0))
+        except Exception:  # noqa: BLE001 - figures must never break a run
+            contours = []
+    out_draw = ImageDraw.Draw(outlined)
+    if contours:
+        for contour in contours:
+            if len(contour) >= 3:
+                out_draw.line([(float(x), float(y)) for x, y in contour] + [(float(contour[0][0]),
+                                                                             float(contour[0][1]))],
+                              fill=(0, 255, 0), width=2)
+    else:  # fallback: pixel boundary
+        boundary = np.asarray(mask, dtype=bool) & ~_erode(np.asarray(mask, dtype=bool))
+        for y, x in zip(*np.nonzero(boundary)):
+            out_draw.point((int(x), int(y)), fill=(0, 255, 0))
+    left = outlined.resize((panel, panel), Image.Resampling.LANCZOS)
+
+    # right: the exact binary mask, downscaled with a smooth filter for display
+    right = mask_image.convert("L").resize((panel, panel), Image.Resampling.LANCZOS).convert("RGB")
+    canvas.paste(left, (10, 30))
+    canvas.paste(right, (panel + 20, 30))
+    label_font = imageops.load_cjk_font(17)
+    draw.text((10, 8), "矫正后的测量图（绿线 = 提取的叶缘）", fill=(0, 0, 0), font=label_font)
+    draw.text((panel + 20, 8), "叶片掩膜（白色 = 计入面积的叶片）", fill=(0, 0, 0), font=label_font)
+    if histogram is not None:
+        hist_figure = imageops.histogram_figure(histogram, cut_index, width=2 * panel + 10,
+                                                height=370, title=title, channel=channel,
+                                                cut_label=cut_label)
+        canvas.paste(hist_figure, (10, panel + 40))
+    figure_path = figure_dir / f"{stem}_threshold.png"
+    canvas.save(figure_path)
+
+    # vector export (sub-pixel contour, real-world cm units) + PDF + PNG plate
+    label = _sample_label(record["file"])
+    size_px = int(mask.shape[0])
+    scale_cm = float(getattr(cfg, "scale_cm", 17.0))
+    record["figure_contour"] = None
+    record["figure_pdf"] = None
+    record["figure_plate"] = None
+    if contours:
+        try:
+            svg = vectorize.contour_svg(
+                contours, size=size_px, scale_cm=scale_cm, title=Path(record["file"]).stem,
+                note=(f"auto-leafbyte contour; threshold="
+                      f"{getattr(analysis, 'color_threshold', None) or analysis.threshold}"),
+                label=label)
+            svg_path = figure_dir / f"{stem}_contour.svg"
+            svg_path.write_text(svg, encoding="utf-8")
+            record["figure_contour"] = _relative(svg_path, out_dir)
+
+            if export_pdf:
+                pdf_path = figure_dir / f"{stem}_contour.pdf"
+                pdf_bytes = vectorize.contour_pdf(contours, size=size_px,
+                                                  scale_cm=scale_cm, label=label)
+                problems = vectorize.verify_pdf_bytes(pdf_bytes)
+                if problems:
+                    record.setdefault("flags", []).append(
+                        "pdf_structure: " + "; ".join(problems[:3]))
+                pdf_path.write_bytes(pdf_bytes)
+                record["figure_pdf"] = _relative(pdf_path, out_dir)
+
+            plate = vectorize.contour_plate_png(contours, size=size_px, scale_cm=scale_cm,
+                                                label=label)
+            _write_jpeg(plate, figure_dir / f"{stem}_plate.jpg", quality_level=88)
+            record["figure_plate"] = _relative(figure_dir / f"{stem}_plate.jpg", out_dir)
+        except Exception as exc:  # noqa: BLE001
+            record.setdefault("flags", []).append(f"vector export failed: {type(exc).__name__}")
+
+    record["figure_mask"] = _relative(mask_path, out_dir)
+    record["figure_threshold"] = _relative(figure_path, out_dir)
+    return {"figure_mask": record["figure_mask"], "figure_threshold": record["figure_threshold"],
+            "figure_contour": record.get("figure_contour")}
 
 
 def _write_jpeg(image, path: Path, quality_level: int = 85) -> Path:
@@ -182,27 +358,62 @@ def analyze_image(path: str | Path, cfg: Config) -> dict[str, Any]:
             record["stage"] = "measure"
             analysis = measure.analyze(rectified.image, cfg, threshold=threshold)
             result = analysis.result
+            mode = str(getattr(analysis, "mode", "luma"))
+            color_cut = getattr(analysis, "color_threshold", None)
             total_cm2, consumed_cm2, percent = measure.to_cm2(result, cfg, rectified.scale_px_length)
             record["measure"] = _measure_payload(analysis)
+            try:
+                record["traits"] = _traits_payload(analysis, rectified, cfg)
+            except Exception as exc:  # noqa: BLE001 - traits must not break a run
+                record["traits"] = {}
+                record.setdefault("flags", []).append(f"traits failed: {type(exc).__name__}")
+            record["segmentation"] = {"mode": mode,
+                                      "color_threshold": _r(color_cut) if color_cut is not None else None}
             record["total_cm2"] = _r(total_cm2)
             record["consumed_cm2"] = _r(consumed_cm2)
             record["percent_consumed"] = _r(percent)
 
-            # 4. stability ("precision") under threshold perturbation ------
+            if mode == "color" and color_cut is not None:
+                # diagnose the ExG channel instead of luma, so the quality
+                # model sees a comparable separation / bimodality / fence value
+                colour_metrics = colour_threshold_metrics(rectified.image, color_cut)
+                record["threshold_metrics"] = {
+                    key: _r(value) for key, value in colour_metrics.items()
+                    if key in {"separation", "bimodality", "near_threshold_fraction"}}
+                record["histogram"] = colour_metrics["histogram"]
+                record["otsu_separation"] = _r(colour_metrics["separation"])
+                record["segmentation"]["color_metrics"] = {
+                    key: _r(value) for key, value in colour_metrics.items()
+                    if key in {"separation", "bimodality", "near_threshold_fraction"}}
+
+            # 4. stability ("precision") under perturbation of the parameter
+            #    that was actually used to segment the leaf -----------------
             record["stage"] = "stability"
             totals: list[float] = []
-            for delta in cfg.stability_deltas:
-                perturbed = float(np.clip(threshold + delta, 0.01, 0.99))
-                perturbed_analysis = measure.analyze(rectified.image, cfg, threshold=perturbed)
-                perturbed_total, _, _ = measure.to_cm2(
-                    perturbed_analysis.result, cfg, rectified.scale_px_length)
-                totals.append(float(perturbed_total))
+            if mode == "color" and color_cut is not None:
+                deltas = [-float(cfg.color_stability_delta), float(cfg.color_stability_delta)]
+                for delta in deltas:
+                    perturbed_analysis = measure.analyze(
+                        rectified.image, cfg, threshold=threshold,
+                        color_threshold=float(color_cut) + delta)
+                    perturbed_total, _, _ = measure.to_cm2(
+                        perturbed_analysis.result, cfg, rectified.scale_px_length)
+                    totals.append(float(perturbed_total))
+                recorded_deltas = deltas
+            else:
+                for delta in cfg.stability_deltas:
+                    perturbed = float(np.clip(threshold + delta, 0.01, 0.99))
+                    perturbed_analysis = measure.analyze(rectified.image, cfg, threshold=perturbed)
+                    perturbed_total, _, _ = measure.to_cm2(
+                        perturbed_analysis.result, cfg, rectified.scale_px_length)
+                    totals.append(float(perturbed_total))
+                recorded_deltas = [float(d) for d in cfg.stability_deltas]
             mean_total = float(np.mean(totals)) if totals else 0.0
             rel_range = 0.0
             if mean_total > 0 and totals:
                 rel_range = (max(totals) - min(totals)) / mean_total
             record["stability"] = {
-                "deltas": [float(d) for d in cfg.stability_deltas],
+                "deltas": recorded_deltas,
                 "total_cm2": [_r(t) for t in totals],
                 "rel_range": _r(rel_range),
             }
@@ -216,6 +427,11 @@ def analyze_image(path: str | Path, cfg: Config) -> dict[str, Any]:
             analysis = measure.analyze(normalized, cfg, threshold=threshold)
             result = analysis.result
             record["measure"] = _measure_payload(analysis)
+            try:
+                record["traits"] = _traits_payload(analysis, None, cfg)
+            except Exception as exc:  # noqa: BLE001
+                record["traits"] = {}
+                record.setdefault("flags", []).append(f"traits failed: {type(exc).__name__}")
             record["percent_consumed"] = _r(result.percent_consumed)
             record["_analysis"] = analysis
 
@@ -231,6 +447,32 @@ def analyze_image(path: str | Path, cfg: Config) -> dict[str, Any]:
 
     record["timing_ms"] = int((time.perf_counter() - started) * 1000)
     return record
+
+
+def _traits_payload(analysis, rectified, cfg: Config) -> dict[str, Any]:
+    """Ecological leaf traits (see :mod:`leafbyte.traits`).
+
+    Uses the canonical leaf component (not the whole mask, which may hold
+    specks) and the *validated* consumed holes, so ``intact_area_cm2`` equals
+    ``total_cm2`` and ``leaf_area_cm2`` equals the remaining tissue.
+    """
+    result = analysis.result
+    components = getattr(analysis, "components", None)
+    if components is None or result.leaf_label is None:
+        return {}
+    label_map = components.label_map
+    leaf_mask = label_map == result.leaf_label
+    hole_mask = np.zeros_like(leaf_mask)
+    for hole in result.holes:
+        hole_mask |= label_map == hole["label"]
+    units = None
+    image = None
+    if rectified is not None and rectified.scale_px_length:
+        units = float(cfg.scale_cm) / float(rectified.scale_px_length)
+        image = rectified.image
+    else:
+        image = analysis.mask.astype(np.uint8) * 0 + 0 if False else None
+    return traits.compute_traits(leaf_mask, hole_mask, image, units)
 
 
 def _measure_payload(analysis) -> dict[str, Any]:
@@ -279,12 +521,21 @@ def build_candidates(record: dict[str, Any], out_dir: str | Path, cfg: Config) -
     overlay_dir = out_dir / "overlays"
     candidate_dir = overlay_dir / "candidates"
     stem = Path(record["file"]).stem
+    segmentation = record.get("segmentation") or {}
+    mode = str(segmentation.get("mode") or "luma")
+    base_colour_cut = segmentation.get("color_threshold")
 
     for index, delta in enumerate(cfg.candidate_deltas):
         threshold = float(np.clip(base_threshold + float(delta), 0.01, 0.99))
+        colour_cut = None
+        if mode == "color" and base_colour_cut is not None:
+            # luma deltas are ~1/150 of the ExG range; keep the candidate ladder
+            # proportional so ±0.04 behaves like ±6 ExG units
+            colour_cut = float(base_colour_cut) + float(delta) * 150.0
         candidate: dict[str, Any] = {
             "candidate_id": f"t{index}",
             "threshold": _r(threshold),
+            "color_threshold": _r(colour_cut) if colour_cut is not None else None,
             "total_cm2": None,
             "consumed_cm2": None,
             "percent_consumed": None,
@@ -293,7 +544,8 @@ def build_candidates(record: dict[str, Any], out_dir: str | Path, cfg: Config) -
         }
         try:
             if rectified is not None:
-                analysis = measure.analyze(rectified.image, cfg, threshold=threshold)
+                analysis = measure.analyze(rectified.image, cfg, threshold=threshold,
+                                           color_threshold=colour_cut)
                 total_cm2, consumed_cm2, percent = measure.to_cm2(
                     analysis.result, cfg, rectified.scale_px_length)
                 candidate.update(total_cm2=_r(total_cm2), consumed_cm2=_r(consumed_cm2),
@@ -305,7 +557,8 @@ def build_candidates(record: dict[str, Any], out_dir: str | Path, cfg: Config) -
                 normalized = record.get("_normalized")
                 if normalized is None:
                     raise ValueError("record carries no image for candidate rendering")
-                analysis = measure.analyze(normalized, cfg, threshold=threshold)
+                analysis = measure.analyze(normalized, cfg, threshold=threshold,
+                                           color_threshold=colour_cut)
                 candidate["percent_consumed"] = _r(analysis.result.percent_consumed)
                 leaf_mask, hole_mask = _masks(analysis)
                 overlay = imageops.render_overlay(normalized, mask=leaf_mask,
@@ -543,6 +796,9 @@ def run_batch(
     ground_truth_path: str | Path | None = None,
     make_review: bool = True,
     progress: Callable[[str], None] | None = None,
+    overlay_mode: str = "review",
+    save_figures: bool = False,
+    export_pdf: bool = False,
 ) -> dict[str, Any]:
     """Measure every image in ``image_dir`` and route low-precision ones to review."""
     cfg = cfg or Config()
@@ -560,10 +816,18 @@ def run_batch(
     for index, path in enumerate(images, start=1):
         record = analyze_image(path, cfg)
         record = quality.evaluate(record, cfg)
-        if record.get("status") != "auto":
+        if save_figures:
+            try:
+                write_threshold_figure(record, out_dir, cfg, export_pdf=export_pdf)
+            except Exception as exc:  # noqa: BLE001
+                record.setdefault("flags", []).append(f"figure failed: {type(exc).__name__}")
+        needs_review = record.get("status") != "auto"
+        wants_overlays = needs_review or str(overlay_mode).lower() == "all"
+        if wants_overlays:
             try:
                 build_review_overlays(record, out_dir, cfg)
-                record["candidates"] = build_candidates(record, out_dir, cfg)
+                record["candidates"] = (build_candidates(record, out_dir, cfg)
+                                        if needs_review else [])
             except Exception as exc:  # noqa: BLE001
                 record.setdefault("flags", []).append(f"overlay failed: {type(exc).__name__}")
         else:
@@ -583,11 +847,13 @@ def run_batch(
         accuracy = attach_reference(records, load_ground_truth(ground_truth_path), cfg)
 
     written = write_results(records, out_dir)
+    traits_path = write_traits_csv(records, out_dir)
     config_path = out_dir / "config.json"
     cfg.save(config_path)
 
     summary = summarize(records)
     run_info = {
+        "traits_csv": str(traits_path),
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "image_dir": str(image_dir),
         "out_dir": str(out_dir),
@@ -610,6 +876,22 @@ def run_batch(
     log(f"done: {summary['auto']} auto / {summary['review']} review / {summary['failed']} failed")
     return {"records": records, "summary": summary, "accuracy": accuracy,
             "out_dir": out_dir, "review_page": review_path}
+
+
+def write_traits_csv(records: list[dict[str, Any]], out_dir: str | Path) -> Path:
+    """One row per sample with every trait (``leaf_traits.csv``)."""
+    path = Path(out_dir) / "leaf_traits.csv"
+    columns = ["file", "status"] + list(traits.TRAIT_COLUMNS)
+    with open(path, "w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=columns, extrasaction="ignore")
+        writer.writeheader()
+        for record in records:
+            row = {"file": record["file"], "status": record.get("status")}
+            values = record.get("traits") or {}
+            for column in traits.TRAIT_COLUMNS:
+                row[column] = values.get(column)
+            writer.writerow(row)
+    return path
 
 
 def load_records(out_dir: str | Path) -> list[dict[str, Any]]:

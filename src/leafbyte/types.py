@@ -95,6 +95,7 @@ class ScaleDetection:
     #: 0..1, how much the detected quadrilateral looks like the expected square.
     quality: float = 0.0
     #: ``"quad"`` (four marks), ``"quad_relaxed"`` (looser gates),
+    #: ``"quad_dark"`` (dots found with an absolute-dark threshold ladder),
     #: ``"quad_3dot"`` (fourth corner inferred by parallelogram completion),
     #: ``"manual"`` (reviewer supplied), ``"none"`` (not found).
     method: str = "none"

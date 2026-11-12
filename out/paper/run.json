@@ -1,10 +1,29 @@
 {
-  "generated_at": "2026-11-10T06:46:15",
+  "traits_csv": "out\\paper\\leaf_traits.csv",
+  "generated_at": "2026-11-12T01:32:40",
   "image_dir": "data\\paper\\images",
   "out_dir": "out\\paper",
   "config": {
     "max_dim": 1200,
     "background": "white",
+    "leaf_mode": "auto",
+    "color_threshold": null,
+    "color_probe_competing_ratio": 0.05,
+    "color_threshold_range": [
+      6.0,
+      40.0
+    ],
+    "hole_validate_background": true,
+    "hole_dark_ratio": 0.55,
+    "mask_closing": 2,
+    "color_stability_delta": 4.0,
+    "color_stability_tolerance": 0.035,
+    "dot_thresholds": [
+      0.2,
+      0.15,
+      0.25,
+      0.3
+    ],
     "threshold": null,
     "candidate_deltas": [
       -0.04,
@@ -35,23 +54,23 @@
   "ground_truth": "data\\paper\\ground_truth.csv",
   "summary": {
     "images": 30,
-    "auto": 24,
-    "review": 6,
+    "auto": 25,
+    "review": 5,
     "failed": 0,
     "done": 0,
     "rejected": 0,
-    "auto_rate": 0.8,
-    "mean_confidence": 0.9063,
-    "mean_percent_consumed": 6.3199,
-    "total_time_s": 9.52
+    "auto_rate": 0.8333,
+    "mean_confidence": 0.921,
+    "mean_percent_consumed": 6.3191,
+    "total_time_s": 11.74
   },
   "accuracy": {
     "compared": 29,
-    "auto_compared": 23,
-    "auto_within_tolerance": 23,
+    "auto_compared": 24,
+    "auto_within_tolerance": 24,
     "false_auto_accept": 0,
-    "max_abs_error_total_cm2": 0.4111,
-    "mean_abs_error_total_cm2": 0.13144,
+    "max_abs_error_total_cm2": 0.411054,
+    "mean_abs_error_total_cm2": 0.140613,
     "per_file": {
       "AI2.png": {
         "total_cm2": 22.565,
@@ -147,7 +166,7 @@
         "total_cm2": 7.57,
         "consumed_cm2": 0.0,
         "reference_status": "app_test_disabled",
-        "error_total_cm2": -0.00382,
+        "error_total_cm2": -0.003824,
         "error_consumed_cm2": 0.0,
         "rel_error_total": -0.000505,
         "within_tolerance": true
@@ -183,25 +202,25 @@
         "total_cm2": 9.936,
         "consumed_cm2": 0.424,
         "reference_status": "app_test",
-        "error_total_cm2": -0.07847,
-        "error_consumed_cm2": 0.012362,
-        "rel_error_total": -0.007898,
-        "within_tolerance": true
+        "error_total_cm2": -0.383749,
+        "error_consumed_cm2": -0.213005,
+        "rel_error_total": -0.038622,
+        "within_tolerance": false
       },
       "SH4.png": {
         "total_cm2": 5.733,
         "consumed_cm2": 0.002,
         "reference_status": "app_test",
-        "error_total_cm2": -0.10802,
-        "error_consumed_cm2": -0.001045,
-        "rel_error_total": -0.018842,
+        "error_total_cm2": 0.102538,
+        "error_consumed_cm2": -0.002,
+        "rel_error_total": 0.017886,
         "within_tolerance": false
       },
       "SH5.png": {
         "total_cm2": 10.136,
         "consumed_cm2": 0.354,
         "reference_status": "app_test",
-        "error_total_cm2": -0.2616,
+        "error_total_cm2": -0.261598,
         "error_consumed_cm2": 0.013612,
         "rel_error_total": -0.025809,
         "within_tolerance": false
@@ -264,9 +283,9 @@
         "total_cm2": 39.763,
         "consumed_cm2": 0.001,
         "reference_status": "app_test_disabled",
-        "error_total_cm2": -0.4111,
+        "error_total_cm2": -0.411054,
         "error_consumed_cm2": -0.000552,
-        "rel_error_total": -0.010339,
+        "rel_error_total": -0.010338,
         "within_tolerance": true
       },
       "TH5.png": {
@@ -291,9 +310,9 @@
         "total_cm2": 60.034,
         "consumed_cm2": 0.002,
         "reference_status": "app_test",
-        "error_total_cm2": -0.0744,
-        "error_consumed_cm2": 0.001745,
-        "rel_error_total": -0.001239,
+        "error_total_cm2": -0.040655,
+        "error_consumed_cm2": -0.002,
+        "rel_error_total": -0.000677,
         "within_tolerance": true
       },
       "TM4.png": {
@@ -315,19 +334,12 @@
         "within_tolerance": true
       }
     },
-    "auto_mean_abs_error_total_cm2": 0.124972,
+    "auto_mean_abs_error_total_cm2": 0.121458,
     "auto_max_abs_error_total_cm2": 0.311015
   },
-  "elapsed_s": 10.84,
+  "elapsed_s": 16.91,
   "files": {
     "jsonl": "out\\paper\\results.jsonl",
     "csv": "out\\paper\\results.csv"
-  },
-  "review": {
-    "reviewed_at": "decisions.json",
-    "reviewer": "reviewer-01",
-    "decisions": 6,
-    "human_accepted": 6,
-    "rejected": 0
   }
 }

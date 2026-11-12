@@ -21,6 +21,41 @@ class Config:
     #: on white paper, the upstream default).  ``"black"`` => brighter.
     background: str = "white"
 
+    #: How the leaf is separated from the paper.
+    #: ``"luma"``   = upstream behaviour: global Otsu on luma (needs white paper)
+    #: ``"color"``  = excess-green ``2G-R-B`` (works on grey / uneven / bluish
+    #:                backgrounds and under-exposed photos)
+    #: ``"auto"``   = try luma, and fall back to colour when the luma result is
+    #:                not leaf-like (background leaking into the "leaf")
+    leaf_mode: str = "auto"
+    #: ExG cut in ``2G-R-B`` units.  ``None`` = Otsu on the ExG histogram of the
+    #: rectified image (adaptive, recommended); a number forces a fixed cut.
+    color_threshold: float | None = None
+    #: In ``auto`` mode the colour segmentation is only computed when the luma
+    #: result shows a competing blob bigger than this fraction of the leaf (the
+    #: signature of a grey / vignetted background).  Keeps white-paper photos
+    #: as fast as before.
+    color_probe_competing_ratio: float = 0.05
+    #: Sanity clamp for the adaptive ExG cut (in ExG units).  The cut is Otsu on
+    #: the ExG histogram; the clamp only guards against pathological images.
+    color_threshold_range: tuple[float, float] = (6.0, 40.0)
+    #: Treat a hole as eaten area only when its interior looks like the paper
+    #: background; darker lesions / fold shadows are filled back into the leaf.
+    hole_validate_background: bool = True
+    #: Interior luma below ``hole_dark_ratio * paper luma`` is "tissue, not hole".
+    hole_dark_ratio: float = 0.55
+    #: Binary closing radius applied to the colour mask (fills veins/speckle).
+    mask_closing: int = 2
+    #: ExG perturbation used for the stability metric in colour mode.
+    color_stability_delta: float = 4.0
+    #: Relative area change that still counts as "stable" in colour mode.  The
+    #: leaf/background boundary is a gradient of a few ExG units, so the edge is
+    #: inherently a bit softer than the white-paper luma path.
+    color_stability_tolerance: float = 0.035
+    #: Extra luma thresholds tried for scale-dot detection when the Otsu pass
+    #: fails (black dots are simply very dark, independent of the background).
+    dot_thresholds: tuple[float, ...] = (0.20, 0.15, 0.25, 0.30)
+
     # --- segmentation --------------------------------------------------------
     #: ``None`` => Otsu on the luma histogram.  A float in [0, 1] forces it.
     threshold: float | None = None
@@ -76,7 +111,8 @@ class Config:
     # ------------------------------------------------------------------ io ---
     def to_dict(self) -> dict:
         d = asdict(self)
-        for key in ("candidate_deltas", "stability_deltas"):
+        for key in ("candidate_deltas", "stability_deltas", "dot_thresholds",
+                    "color_threshold_range"):
             d[key] = list(d[key])
         return d
 
@@ -92,7 +128,8 @@ class Config:
     def from_dict(cls, data: dict) -> "Config":
         fields = {f for f in cls.__dataclass_fields__}
         kwargs = {k: v for k, v in data.items() if k in fields}
-        for key in ("candidate_deltas", "stability_deltas"):
+        for key in ("candidate_deltas", "stability_deltas", "dot_thresholds",
+                    "color_threshold_range"):
             if key in kwargs:
                 kwargs[key] = tuple(kwargs[key])
         return cls(**kwargs)

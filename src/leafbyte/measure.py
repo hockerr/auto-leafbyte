@@ -84,13 +84,22 @@ class MeasureAnalysis:
     histogram: np.ndarray | None = None
     #: Extra numeric evidence, see :func:`summarize`.
     stats: dict[str, Any] = field(default_factory=dict)
+    #: Which segmentation produced the numbers: ``"luma"`` (upstream behaviour)
+    #: or ``"color"`` (excess-green, for grey/uneven backgrounds).
+    mode: str = "luma"
+    #: The ExG cut actually used when ``mode == "color"``.
+    color_threshold: float | None = None
+    #: Continuous segmentation field (``>0`` inside the leaf) and its level, used
+    #: to trace sub-pixel vector contours for figures.
+    contour_field: np.ndarray | None = None
+    contour_level: float = 0.0
 
 
 # ---------------------------------------------------------------------------
 # public API
 # ---------------------------------------------------------------------------
 def analyze(rect_img, cfg, threshold: float | None = None,
-            excluded_mask=None) -> MeasureAnalysis:
+            excluded_mask=None, color_threshold: float | None = None) -> MeasureAnalysis:
     """Segment a rectified image and compute the upstream leaf-area statistics.
 
     Parameters
@@ -106,6 +115,10 @@ def analyze(rect_img, cfg, threshold: float | None = None,
     excluded_mask : numpy.ndarray, optional
         Boolean ``(S, S)`` bitmap of reviewer-excluded pixels; those
         components are not counted as consumed.
+    color_threshold : float, optional
+        ExG cut for the colour segmentation (``cfg.color_threshold`` by
+        default).  Only used when the colour path is selected; the stability
+        metric perturbs it.
 
     Returns
     -------
@@ -145,7 +158,39 @@ def analyze(rect_img, cfg, threshold: float | None = None,
     )
     components = _ccl.label_components(mask)
     result = compute_results(components, cfg, excluded_mask=excluded_mask)
+    mode = "luma"
+    used_color: float | None = None
+    filled_mask = None
+
+    leaf_mode = str(getattr(cfg, "leaf_mode", "auto") or "auto").lower()
+    if leaf_mode in {"color", "auto"}:
+        probe_threshold = float(getattr(cfg, "color_probe_competing_ratio", 0.05) or 0.05)
+        worth_probing = (
+            leaf_mode == "color"
+            or not _is_leaf_like(result, mask)
+            or result.competing_ratio > probe_threshold
+            or _speckle_only(result, cfg)
+        )
+        colour = _analyse_colour(img, cfg, excluded_mask, color_threshold) if worth_probing else None
+        if colour is not None:
+            take = leaf_mode == "color" or _should_use_colour(result, mask, colour[2], colour[0], cfg)
+            if take:
+                mask, components, result, used_color, filled_mask = colour
+                mode = "color"
+
+    # continuous field for sub-pixel contour tracing (>0 inside the leaf)
+    if mode == "color" and used_color is not None:
+        contour_field = _imageops.exg(img) - float(used_color)
+        if filled_mask is not None and np.any(filled_mask):
+            contour_field = np.where(filled_mask, float(np.abs(contour_field).max()) + 1e3,
+                                     contour_field)
+    else:
+        contour_field = float(thr) - _imageops.luma(img)
+
     stats = summarize(components, result, cfg)
+    stats["segmentation_mode"] = mode
+    if used_color is not None:
+        stats["color_threshold"] = used_color
     return MeasureAnalysis(
         threshold=thr,
         mask=mask,
@@ -155,7 +200,137 @@ def analyze(rect_img, cfg, threshold: float | None = None,
         otsu_separation=otsu_separation(hist, thr),
         histogram=hist,
         stats=stats,
+        mode=mode,
+        color_threshold=used_color,
+        contour_field=contour_field,
+        contour_level=0.0,
     )
+
+
+def _needs_colour_fallback(result: MeasureResult, mask: np.ndarray) -> bool:
+    """True when the luma segmentation does not look like a leaf on paper."""
+    if result.leaf_label is None:
+        return True
+    if result.leaf_touches_border:
+        return True
+    if mask.size == 0:
+        return True
+    fraction = float(result.leaf_px) / float(mask.size)
+    return fraction > 0.15 or fraction < 0.002
+
+
+def _speckle_only(result: MeasureResult, cfg) -> bool:
+    """Consumed area made exclusively of sub-``tiny_hole_px`` specks."""
+    if result.consumed_px <= 0 or result.hole_count <= 0:
+        return False
+    if result.tiny_holes != result.hole_count:
+        return False
+    if result.total_px <= 0:
+        return False
+    return result.consumed_px / float(result.total_px) < 0.02
+
+
+def _should_use_colour(luma_result, luma_mask, colour_result, colour_mask, cfg) -> bool:
+    """Decide whether the excess-green segmentation explains the photo better.
+
+    The luma/white-paper segmentation stays the default (it is what upstream
+    does and what the published reference values were produced with).  Colour is
+    only substituted when it is demonstrably cleaner:
+
+    * the luma result is not leaf-like at all (background leaking in, leaf cut
+      off by the crop), or
+    * a second luma component competes with the leaf (>10 % of its size) - the
+      classic symptom of a grey / vignetted background, or
+    * the luma "consumed" area consists only of 1-2 px speckles and the colour
+      segmentation reports a clean leaf with none.
+    """
+    if not _is_leaf_like(colour_result, colour_mask):
+        return False
+    if colour_result.competing_ratio > 0.05:
+        return False
+    if not _is_leaf_like(luma_result, luma_mask):
+        return True
+    if luma_result.competing_ratio > 0.10:
+        return True
+    return _speckle_only(luma_result, cfg) and not _speckle_only(colour_result, cfg) \
+        and colour_result.consumed_px == 0
+
+
+def _is_leaf_like(result: MeasureResult, mask: np.ndarray) -> bool:
+    if result.leaf_label is None or mask.size == 0:
+        return False
+    if result.leaf_touches_border:
+        return False
+    fraction = float(result.leaf_px) / float(mask.size)
+    return 5e-4 <= fraction <= 0.35
+
+
+def _analyse_colour(img, cfg, excluded_mask=None, color_threshold=None):
+    """Segment the leaf by excess-green; returns ``(mask, components, result, cut)``."""
+    from leafbyte import imageops as _imageops
+    from leafbyte import ccl as _ccl
+
+    cut = color_threshold if color_threshold is not None else getattr(cfg, "color_threshold", None)
+    if cut is None:
+        # adaptive: Otsu on the ExG channel of this very image
+        cut = _imageops.exg_threshold(img)
+        bounds = getattr(cfg, "color_threshold_range", None) or (6.0, 40.0)
+        cut = float(np.clip(cut, float(bounds[0]), float(bounds[1])))
+    cut = float(cut)
+    mask = np.asarray(_imageops.exg(img) > cut, dtype=bool)
+    radius = int(getattr(cfg, "mask_closing", 2) or 0)
+    if radius > 0:
+        mask = _imageops.close_mask(mask, radius)
+    if not mask.any():
+        return None
+    components = _ccl.label_components(mask)
+    result = compute_results(components, cfg, excluded_mask=excluded_mask)
+    filled_mask = None
+
+    # --- dark interior patches are tissue, not eaten holes -----------------
+    # The ExG criterion calls anything non-green "empty".  A necrotic lesion, a
+    # fold shadow or the dark side of a crease is non-green but the lamina is
+    # still there, and only background (paper) showing through is a real hole.
+    # So holes whose interior is clearly darker than the paper are filled back
+    # into the leaf; only paper-coloured holes count as consumed area.
+    if getattr(cfg, "hole_validate_background", True):
+        paper_pixels = rect_pixels = None
+        outside = components.label_map == BACKGROUND_LABEL
+        if not outside.any():
+            outside = ~mask
+        paper = img[outside] if outside.any() else None
+        if paper is not None and paper.size:
+            paper_luma = float(np.mean(_luma_of(paper)))
+        else:
+            paper_luma = 0.75
+        dark_limit = paper_luma * float(getattr(cfg, "hole_dark_ratio", 0.55))
+        filled_labels: list[int] = []
+        filled_px = 0
+        kept: list[dict[str, Any]] = []
+        for hole in result.holes:
+            label = int(hole["label"])
+            pix = img[components.label_map == label]
+            if pix.size == 0:
+                kept.append(hole)
+                continue
+            if float(np.mean(_luma_of(pix))) < dark_limit:
+                filled_labels.append(label)
+                filled_px += int(hole["area_px"])
+            else:
+                kept.append(hole)
+        if filled_labels:
+            filled_mask = np.isin(components.label_map, filled_labels)
+            mask = mask | filled_mask
+            components = _ccl.label_components(mask)
+            previous_total = result.total_px
+            result = compute_results(components, cfg, excluded_mask=excluded_mask)
+            result.flags.append("dark_patches_filled")
+            # total area (leaf + eaten) must not change: tissue was moved from
+            # "consumed" into "leaf"
+            if result.total_px != previous_total:
+                result.flags.append("filled_area_mismatch")
+            result.stats_filled_px = filled_px
+    return mask, components, result, cut, filled_mask
 
 
 def compute_results(ci: ComponentsInfo, cfg,
@@ -366,6 +541,12 @@ def measure_dict(analysis: MeasureAnalysis, include_stats: bool = True) -> dict:
         "tiny_holes": int(result.tiny_holes),
         "flags": list(result.flags),
     }
+    out["mode"] = getattr(analysis, "mode", "luma")
+    filled = getattr(result, "stats_filled_px", None)
+    if filled:
+        out["filled_dark_px"] = int(filled)
+    if getattr(analysis, "color_threshold", None) is not None:
+        out["color_threshold"] = float(analysis.color_threshold)
     if include_stats:
         stats = dict(analysis.stats or {})
         for key, value in stats.items():
@@ -416,6 +597,12 @@ def otsu_separation(hist, threshold) -> float:
 # ---------------------------------------------------------------------------
 # private helpers
 # ---------------------------------------------------------------------------
+def _luma_of(pixels: np.ndarray) -> np.ndarray:
+    """Luma (0..1) of an (N, 3) uint8 array of pixel colours."""
+    array = np.asarray(pixels, dtype=np.float64)
+    return (0.299 * array[:, 0] + 0.587 * array[:, 1] + 0.114 * array[:, 2]) / 255.0
+
+
 def _to_uint8_rgb(img) -> np.ndarray:
     """Coerce common image representations to ``(H, W, 3)`` uint8 RGB."""
     array = np.asarray(img)

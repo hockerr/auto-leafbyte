@@ -48,6 +48,11 @@ leafbyte report out/                                      # 汇总统计
   **平局取桶号更大者**（上游用 `>=` 更新）。
 - 二值化（白背景）：`occupied = luma < threshold`（**严格小于**）。
   黑背景模式：`occupied = luma > threshold`。
+- **灰背景回退（v1.1 新增）**：当亮度结果不像"白纸上的叶子"（最大连通域贴边 /
+  有 ≥10% 叶面积的竞争斑块 / consumed 全是 <25 px 噪点）时，改用
+  `ExG = 2G − R − B > cfg.color_threshold` 的颜色分割 + 半径 2 的闭运算，
+  并在 `record["segmentation"]["mode"] = "color"` 里记录；质量模型对颜色模式使用
+  单独的稳定性预算（`color_stability_tolerance`）。
 
 ### 3.3 连通域标注（4 连通）
 `labelConnectedComponents` 语义：
@@ -109,6 +114,8 @@ leafbyte report out/                                      # 汇总统计
 | `src/leafbyte/scale.py`, `tests/test_scale.py` | **scale** | 4 点检测 + 单应矫正 |
 | `src/leafbyte/measure.py`, `src/leafbyte/quality.py`, `tests/test_measure.py`, `tests/test_quality.py` | **measure-qc** | 面积统计 + 质量指标/置信度 |
 | `src/leafbyte/review.py`, `tests/test_review.py`, `docs/REVIEW_WORKFLOW.md` | **review-ui** | 审核队列 JSON + 离线 HTML 审核页 + 决策合并 |
+| `src/leafbyte/traits.py` | Lead（移植自 GUI 版） | 叶片性状：周长/叶长/叶宽/圆度/凸度/叶色/GCC/ExG/SLA/LMA |
+| `src/leafbyte/vectorize.py` | Lead | 亚像素等值线（marching squares）、SVG/PDF/PNG 图版导出（含比例条+编号） |
 | `docs/ALGORITHM.md` | Lead | 本文件 |
 | `data/`, `out/` | Lead 统筹 | 数据与产物（各人可写 `out/<自己的临时子目录>`） |
 
@@ -255,3 +262,30 @@ apply(records, decisions: dict, cfg) -> list[dict]   # 合并人工决策，返�
 - 完成/卡住/需要改契约，`send_message` 给 `lead`，一句话说明状态 + 需要的动作。
 - 不要动别人的文件；不要 `git` 操作；不要改 `data/`。
 - 你的实现要能被别人在不读你代码的情况下调用：docstring 写清输入输出。
+
+## 10. 图像/图版导出（v1.2）
+
+`--save-figures`（默认开）为每张样本在 `out/<run>/figures/` 下生成：
+
+| 文件 | 内容 |
+| --- | --- |
+| `<样本>_threshold.png` | 矫正图 + 子像素叶缘轮廓（绿）+ 掩膜 + 阈值直方图 |
+| `<样本>_mask.png` | 全分辨率二值掩膜（面积按它计算） |
+| `<样本>_contour.svg` | 矢量轮廓：`width/height` 为 cm，`viewBox` 为像素；含 `leaf-area`（填充+孔洞）与 `leaf-outline`（描边）两组，`<metadata>` 带面积/阈值 |
+| `<样本>_contour.pdf` | **加 `--pdf` 才生成**：单页矢量 PDF（17 cm × 19.4 cm），矢量叶形 + 比例条 + 样本编号（中文编号以位图 XObject 嵌入） |
+| `<样本>_plate.jpg` | 位图图版（叶片填充+轮廓+比例条+编号），用于快速拼图 |
+
+轮廓来自**连续分割场**（`ExG − 阈值` 或 `阈值 − luma`）的 0 等值线，marching squares
+给出亚像素顶点，因此任意放大都平滑；<12 px² 的伪轮廓（鞍点噪声）会被丢弃并在
+`data-dropped-specks` 里计数。面积仍以像素计数为准（两者差 ~0.05%）。
+
+## 11. 汇总数据表（v1.3）
+
+`tools/make_summary_table.py --run <run> [--run <run> ...] --out <dir>`：
+把多个 run 的 `results.jsonl` 合成一张 `叶片性状汇总.xlsx` + `.csv`。
+
+- 样本数据：34 列（状态、置信度、面积、取食率、全部性状、孔洞、内部暗斑、分割方式、标志、备注）
+- 性状统计：指标 × {全部样本, 各数据集} 的 n / 均值 / 标准差 / 最小 / 中位 / 最大
+- 说明：方法学备注
+
+PDF 导出改为可选（`--pdf`），默认只出 CSV/XLSX + 阈值图 + 掩膜 + SVG 轮廓 + PNG 图版。

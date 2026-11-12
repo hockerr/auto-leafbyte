@@ -119,6 +119,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--message", default="Release auto-leafbyte")
     parser.add_argument("--public", dest="private", action="store_false", default=False,
                         help="make the repository public (default: private)")
+    parser.add_argument("--replace", action="store_true",
+                        help="replace the branch tree entirely (deletes files removed locally)")
     parser.add_argument("--dry-run", action="store_true", help="only list what would be uploaded")
     args = parser.parse_args(argv)
 
@@ -210,7 +212,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  uploaded {index}/{len(files)} blobs")
 
     tree_payload: dict = {"tree": tree_entries}
-    if base_tree:
+    if base_tree and not args.replace:
         tree_payload["base_tree"] = base_tree
     tree = client.request("POST", f"/repos/{repository}/git/trees", tree_payload)
 

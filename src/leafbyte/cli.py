@@ -34,6 +34,10 @@ def cmd_run(args: argparse.Namespace) -> int:
         cfg.max_dim = args.max_dim
     if args.background is not None:
         cfg.background = args.background
+    if getattr(args, "leaf_mode", None) is not None:
+        cfg.leaf_mode = args.leaf_mode
+    if getattr(args, "color_threshold", None) is not None:
+        cfg.color_threshold = args.color_threshold
     if args.auto_accept_min is not None:
         cfg.auto_accept_min = args.auto_accept_min
     if args.review_min is not None:
@@ -46,6 +50,9 @@ def cmd_run(args: argparse.Namespace) -> int:
         ground_truth_path=args.ground_truth,
         make_review=not args.no_review,
         progress=_print if not args.quiet else None,
+        overlay_mode=getattr(args, "overlays", "review"),
+        save_figures=getattr(args, "save_figures", False),
+        export_pdf=getattr(args, "pdf", False),
     )
     _print("")
     _print(f"results : {Path(args.out) / batch.RESULTS_CSV}")
@@ -205,12 +212,24 @@ def build_parser() -> argparse.ArgumentParser:
                      help="force the luma threshold instead of Otsu (0-1)")
     run.add_argument("--max-dim", type=int, default=None, help="normalise longest side (default 1200)")
     run.add_argument("--background", choices=["white", "black"], default=None)
+    run.add_argument("--leaf-mode", choices=["auto", "luma", "color"], default=None,
+                     help="leaf segmentation: auto (default), luma (white paper) or color (excess green)")
+    run.add_argument("--color-threshold", type=float, default=None,
+                     help="ExG cut for --leaf-mode color (default 5.0)")
     run.add_argument("--config", default=None, help="JSON config produced by a previous run")
     run.add_argument("--ground-truth", default=None, help="CSV with expected areas for accuracy stats")
     run.add_argument("--auto-accept-min", type=float, default=None,
                      help="confidence needed to accept without review (0-1)")
     run.add_argument("--review-min", type=float, default=None,
                      help="below this confidence a sample counts as failed")
+    run.add_argument("--save-figures", dest="save_figures", action="store_true", default=True,
+                     help="save per-sample leaf mask + histogram/threshold figure into <out>/figures/ (default: on)")
+    run.add_argument("--no-save-figures", dest="save_figures", action="store_false",
+                     help="skip the per-sample threshold figures")
+    run.add_argument("--pdf", action="store_true",
+                     help="also export a vector PDF (off by default; SVG + PNG plate are always written)")
+    run.add_argument("--overlays", choices=["review", "all"], default="review",
+                     help="write overlay images for review items only (default) or for every sample")
     run.add_argument("--no-review", action="store_true", help="do not render the review page")
     run.add_argument("--quiet", action="store_true")
     run.set_defaults(func=cmd_run)

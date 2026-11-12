@@ -14,7 +14,8 @@
 ### A. 用脚本（无需本地 git 可用）
 
 ```bash
-python tools/publish_github.py --token <你的 PAT> --repo auto-leafbyte --public
+# 首次创建仓库 / 之后更新都用同一条命令；--replace 让远端文件与本地完全一致
+python tools/publish_github.py --token <你的 PAT> --repo auto-leafbyte --public --replace
 ```
 
 - Token 需要 `repo` 权限（fine-grained token：`Administration: read/write` +

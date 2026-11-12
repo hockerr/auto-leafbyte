@@ -849,6 +849,27 @@ def detect(img, cfg: Config | None = None) -> ScaleDetection:
             if best is not before and best is not None:
                 best["extra_flags"] = ["4th scale mark inferred"]
 
+    # --- pass D: absolute dark thresholds ----------------------------------
+    # The scale dots are simply very dark.  When the paper is grey or the light
+    # is uneven, a global Otsu cut can land *inside* the background intensity
+    # range and swallow the dots, so retry with absolute low luma cuts.
+    if best is None:
+        for dark in getattr(cfg, "dot_thresholds", ()) or ():
+            threshold = float(np.clip(float(dark), 0.01, 0.99))
+            if abs(threshold - base_threshold) < 1e-9:
+                continue
+            for relaxed in (False, True):
+                candidates, result, _stats = attempt(threshold, relaxed)
+                if result is None:
+                    continue
+                before = best
+                factor = RELAXED_QUALITY_FACTOR if relaxed else 1.0
+                consider(threshold, 1, result, candidates, "quad_dark", factor)
+                if best is not before and best is not None:
+                    best["extra_flags"] = [f"dark-dot threshold {threshold:.2f}"]
+            if best is not None and best["final_quality"] >= GOOD_QUAD_QUALITY:
+                break
+
     if best is None:
         flags = _failure_flags(primary_candidates, primary_stats)
         return _failure_detection(primary_candidates, base_threshold, flags, primary_stats)
