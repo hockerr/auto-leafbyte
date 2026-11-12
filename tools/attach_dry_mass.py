@@ -54,16 +54,30 @@ def _read_masses(path: Path) -> dict[str, float]:
     return masses
 
 
+def _normalise(name: str) -> str:
+    """Canonical key: no extension, no trailing "(date ...)", no "Herbivory Data" prefix."""
+    stem = Path(str(name)).stem if str(name).lower().endswith((".png", ".jpg", ".jpeg")) else str(name)
+    core = stem.split("(")[0].strip()
+    for prefix in ("Herbivory Data ", "Herbivory Data", "Herbivory"):
+        if core.lower().startswith(prefix.lower().strip()):
+            core = core[len(prefix):].strip()
+            break
+    return core.casefold()
+
+
 def _lookup(masses: dict[str, float], filename: str) -> float | None:
+    """Match on the full name or the normalised sample code - never by substring.
+
+    Substring matching silently bound "140盐肤木-1" to samples "-10"/"-11"/"-12"
+    and corrupted their SLA/LMA.
+    """
     if filename in masses:
         return masses[filename]
-    stem = Path(filename).stem
-    for key in (stem, stem.split("(")[0].strip()):
-        if key in masses:
-            return masses[key]
-    for key, value in masses.items():
-        if key and (key in filename or key in stem):
-            return value
+    target = _normalise(filename)
+    hits = [value for key, value in masses.items()
+            if _normalise(key) == target]
+    if len(hits) == 1:
+        return hits[0]
     return None
 
 

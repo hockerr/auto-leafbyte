@@ -1,7 +1,6 @@
 """Build one summary data table (CSV + optional Excel) from finished runs.
 
     python tools/make_summary_table.py --run out/yanfumu --run out/mujing --out out/汇总
-    python tools/make_summary_table.py --run out/yanfumu --sheets-only
 
 Outputs (in ``--out``):
 
@@ -50,7 +49,7 @@ SAMPLE_COLUMNS: list[tuple[str, str]] = [
     ("file", "文件名"),
     ("status", "状态"),
     ("confidence", "置信度"),
-    ("total_cm2", "叶面积_cm2"),
+    ("leaf_area_cm2", "叶面积_cm2"),
     ("intact_cm2", "完整叶面积_cm2"),
     ("consumed_cm2", "取食面积_cm2"),
     ("percent_consumed", "取食率_%"),
@@ -83,7 +82,7 @@ SAMPLE_COLUMNS: list[tuple[str, str]] = [
 
 #: traits summarised in the statistics sheet (chinese label)
 STAT_COLUMNS = [
-    ("total_cm2", "叶面积_cm2"), ("intact_cm2", "完整叶面积_cm2"),
+    ("leaf_area_cm2", "叶面积_cm2"), ("intact_cm2", "完整叶面积_cm2"),
     ("consumed_cm2", "取食面积_cm2"), ("percent_consumed", "取食率_%"),
     ("perimeter_cm", "叶周长_cm"), ("length_cm", "叶长_cm"), ("width_cm", "叶宽_cm"),
     ("aspect_ratio", "长宽比"), ("circularity", "圆度"), ("solidity", "凸度"),
@@ -131,7 +130,7 @@ def sample_row(record: dict, index: int, dataset: str) -> dict:
         "status": STATUS_ZH.get(record.get("status"), record.get("status")),
         "status_raw": record.get("status"),
         "confidence": _num(record.get("confidence")),
-        "total_cm2": _num(record.get("total_cm2")),
+        "leaf_area_cm2": _num(trait_values.get("leaf_area_cm2")),
         "intact_cm2": _num(trait_values.get("intact_area_cm2")),
         "consumed_cm2": _num(record.get("consumed_cm2")),
         "percent_consumed": _num(record.get("percent_consumed")),

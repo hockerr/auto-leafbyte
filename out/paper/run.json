@@ -1,6 +1,6 @@
 {
   "traits_csv": "out\\paper\\leaf_traits.csv",
-  "generated_at": "2026-11-12T01:32:40",
+  "generated_at": "2026-11-12T09:31:50",
   "image_dir": "data\\paper\\images",
   "out_dir": "out\\paper",
   "config": {
@@ -15,6 +15,7 @@
     ],
     "hole_validate_background": true,
     "hole_dark_ratio": 0.55,
+    "hole_paper_colour_distance": 45.0,
     "mask_closing": 2,
     "color_stability_delta": 4.0,
     "color_stability_tolerance": 0.035,
@@ -61,8 +62,8 @@
     "rejected": 0,
     "auto_rate": 0.8333,
     "mean_confidence": 0.921,
-    "mean_percent_consumed": 6.3191,
-    "total_time_s": 11.74
+    "mean_percent_consumed": 6.3197,
+    "total_time_s": 11.06
   },
   "accuracy": {
     "compared": 29,
@@ -70,7 +71,7 @@
     "auto_within_tolerance": 24,
     "false_auto_accept": 0,
     "max_abs_error_total_cm2": 0.411054,
-    "mean_abs_error_total_cm2": 0.140613,
+    "mean_abs_error_total_cm2": 0.140802,
     "per_file": {
       "AI2.png": {
         "total_cm2": 22.565,
@@ -211,9 +212,9 @@
         "total_cm2": 5.733,
         "consumed_cm2": 0.002,
         "reference_status": "app_test",
-        "error_total_cm2": 0.102538,
-        "error_consumed_cm2": -0.002,
-        "rel_error_total": 0.017886,
+        "error_total_cm2": -0.108022,
+        "error_consumed_cm2": -0.001045,
+        "rel_error_total": -0.018842,
         "within_tolerance": false
       },
       "SH5.png": {
@@ -337,7 +338,7 @@
     "auto_mean_abs_error_total_cm2": 0.121458,
     "auto_max_abs_error_total_cm2": 0.311015
   },
-  "elapsed_s": 16.91,
+  "elapsed_s": 16.15,
   "files": {
     "jsonl": "out\\paper\\results.jsonl",
     "csv": "out\\paper\\results.csv"

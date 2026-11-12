@@ -81,23 +81,28 @@ def _cell_segments(field: np.ndarray, level: float) -> list[tuple[Point, Point]]
             points_b = edge_points[second][mask]
             segments.extend(zip(map(tuple, points_a), map(tuple, points_b)))
 
-    # ambiguous saddle cells
-    for value, pairs in ((5, [("L", "T"), ("R", "B")]), (10, [("T", "R"), ("B", "L")])):
+    # Ambiguous saddle cells: case 5 = TL+BR inside, case 10 = TR+BL inside.
+    # With the cell centre inside, the two inside corners are connected, so the
+    # contour must cut off the two *outside* corners; with the centre outside
+    # they are separated and each inside corner gets its own small loop.
+    ambiguous = {
+        5: {"centre_in": [("T", "R"), ("B", "L")], "centre_out": [("L", "T"), ("R", "B")]},
+        10: {"centre_in": [("L", "T"), ("R", "B")], "centre_out": [("T", "R"), ("B", "L")]},
+    }
+    for value, options in ambiguous.items():
         mask = case == value
         if not mask.any():
             continue
-        flipped = centre[mask] > level
-        first_points = edge_points[pairs[0][0]][mask]
-        second_points = edge_points[pairs[0][1]][mask]
-        third_points = edge_points[pairs[1][0]][mask]
-        fourth_points = edge_points[pairs[1][1]][mask]
-        for index in range(first_points.shape[0]):
-            if flipped[index]:
-                segments.append((tuple(first_points[index]), tuple(second_points[index])))
-                segments.append((tuple(third_points[index]), tuple(fourth_points[index])))
-            else:
-                segments.append((tuple(first_points[index]), tuple(fourth_points[index])))
-                segments.append((tuple(third_points[index]), tuple(second_points[index])))
+        centre_inside = centre[mask] > level
+        for label, pairs in options.items():
+            selected = mask.copy()
+            selected[mask] = (centre_inside if label == "centre_in" else ~centre_inside)
+            if not selected.any():
+                continue
+            for first, second in pairs:
+                points_a = edge_points[first][selected]
+                points_b = edge_points[second][selected]
+                segments.extend(zip(map(tuple, points_a), map(tuple, points_b)))
     return segments
 
 
@@ -145,8 +150,22 @@ def _chain(segments: Iterable[tuple[Point, Point]], decimals: int = 6
 
 
 def marching_squares(field: np.ndarray, level: float = 0.0) -> list[Polygon]:
-    """Closed sub-pixel contours of ``field == level`` as ``[(x, y), ...]``."""
-    return _chain(_cell_segments(field, level))
+    """Closed sub-pixel contours of ``field == level`` as ``[(x, y), ...]``.
+
+    The field is padded with one "outside" row/column so that contours touching
+    the image border are closed loops too - otherwise they would be dropped and
+    a hole / debris patch could be drawn as the leaf.
+    """
+    field = np.asarray(field, dtype=np.float64)
+    if field.size == 0:
+        return []
+    padded = np.pad(field, 1, mode="constant", constant_values=float(level) - 1.0)
+    contours = _chain(_cell_segments(padded, level))
+    shifted: list[Polygon] = []
+    for polygon in contours:
+        # undo the padding offset (the pad cell sits half a pixel outside)
+        shifted.append([(x - 1.0, y - 1.0) for x, y in polygon])
+    return shifted
 
 
 def polygon_area(vertices: Polygon) -> float:
@@ -258,9 +277,9 @@ def contour_svg(
              f'width="{scale_cm:.4f}cm" height="{scale_cm + (band_cm if annotate else 0.0):.4f}cm" '
              f'viewBox="0 0 {size} {page_h_px:.2f}">']
     if title:
-        lines.append(f"  <title>{title}</title>")
+        lines.append(f"  <title>{_xml_escape(title)}</title>")
     if note:
-        lines.append(f"  <desc>{note}</desc>")
+        lines.append(f"  <desc>{_xml_escape(note)}</desc>")
     lines.append('  <g id="leaf-area">')
     lines.append(f'    <path d="{_path_data(leaf)}" fill="{leaf_colour}" fill-rule="evenodd" '
                  f'stroke="none"/>')
@@ -275,8 +294,10 @@ def contour_svg(
     lines.append("  </g>")
     lines.append("  <g id=\"measurements\" font-family=\"sans-serif\" font-size=\"10\" "
                  "fill=\"#333333\">")
-    lines.append(f'    <metadata data-leaf-area-cm2="{(leaf_area_px + hole_area_px) * to_cm2:.4f}" '
+    # the outer contour already encloses the holes: tissue = outer - holes
+    lines.append(f'    <metadata data-intact-area-cm2="{leaf_area_px * to_cm2:.4f}" '
                  f'data-hole-area-cm2="{hole_area_px * to_cm2:.4f}" '
+                 f'data-leaf-area-cm2="{(leaf_area_px - hole_area_px) * to_cm2:.4f}" '
                  f'data-scale-cm="{scale_cm:.4f}" data-image-px="{size}" '
                  f'data-dropped-specks="{dropped}"/>')
     lines.append("  </g>")
@@ -293,10 +314,11 @@ def contour_svg(
         if label:
             lines.append(f'    <text x="{bar_x:.2f}" y="{size + 0.78 * px_per_cm:.2f}" '
                          f'font-size="{font_px:.2f}" fill="#222222">{_xml_escape(label)}</text>')
-        lines.append(f'    <rect x="{bar_x:.2f}" y="{bar_y:.2f}" width="{bar_px:.2f}" '
-                     f'height="{bar_h:.2f}" fill="#222222"/>')
+        if bar_px > 0:
+            lines.append(f'    <rect x="{bar_x:.2f}" y="{bar_y:.2f}" width="{bar_px:.2f}" '
+                         f'height="{bar_h:.2f}" fill="#222222"/>')
         # small cm ticks
-        for step in range(int(round(float(scale_bar_cm))) + 1):
+        for step in range(int(round(float(scale_bar_cm))) + 1 if bar_px > 0 else 0):
             tick_x = bar_x + step * px_per_cm
             tick_h = (0.26 if step in (0, int(round(float(scale_bar_cm)))) else 0.14) * px_per_cm
             lines.append(f'    <rect x="{tick_x:.2f}" y="{bar_y + bar_h:.2f}" '
@@ -576,8 +598,9 @@ def contour_pdf(
         if label:
             bitmap = _label_bitmap(label, height_px=110)
             if bitmap is not None:
-                width_pt = font_pt * bitmap.size[0] / max(bitmap.size[1], 1)
-                pdf.image(bitmap, margin, 1.45 * _CM_TO_PT, width_pt, 1.05 * _CM_TO_PT)
+                height_pt = 1.02 * _CM_TO_PT
+                width_pt = height_pt * bitmap.size[0] / max(bitmap.size[1], 1)
+                pdf.image(bitmap, margin, 1.45 * _CM_TO_PT, width_pt, height_pt)
             else:  # pragma: no cover - only without a CJK font
                 pdf.text(margin, 1.45 * _CM_TO_PT, font_pt, label)
     return pdf.to_bytes()
@@ -636,8 +659,9 @@ def contour_plate_png(
         bar_len = float(scale_bar_cm) * px_per_cm
         bar_y = height - 1.15 * px_per_cm
         bar_h = max(2, 0.08 * px_per_cm)
-        draw.rectangle([margin, bar_y, margin + bar_len, bar_y + bar_h], fill=(30, 30, 30))
-        for step in range(int(round(float(scale_bar_cm))) + 1):
+        if bar_len > 0:
+            draw.rectangle([margin, bar_y, margin + bar_len, bar_y + bar_h], fill=(30, 30, 30))
+        for step in range(int(round(float(scale_bar_cm))) + 1 if bar_len > 0 else 0):
             x = margin + step * px_per_cm
             tick_h = (0.24 if step in (0, int(round(float(scale_bar_cm)))) else 0.13) * px_per_cm
             draw.rectangle([x, bar_y + bar_h, x + max(1, 0.03 * px_per_cm), bar_y + bar_h + tick_h],

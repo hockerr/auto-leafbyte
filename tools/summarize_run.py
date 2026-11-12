@@ -64,7 +64,8 @@ def main(argv: list[str] | None = None) -> int:
             writer.writerow([
                 index, record["file"], STATUS_ZH.get(record["status"], record["status"]),
                 round(float(record.get("confidence") or 0), 3),
-                round(record["total_cm2"], 3) if record.get("total_cm2") is not None else "",
+                round(record["leaf_area_cm2"], 3) if record.get("leaf_area_cm2") is not None
+                else (round(record["total_cm2"], 3) if record.get("total_cm2") is not None else ""),
                 round(record["consumed_cm2"], 3) if record.get("consumed_cm2") is not None else "",
                 round(record["percent_consumed"], 2) if record.get("percent_consumed") is not None else "",
                 (record.get("traits") or {}).get("intact_area_cm2"),
@@ -112,8 +113,11 @@ def main(argv: list[str] | None = None) -> int:
         lines.append("## 待人工复核\n")
         for record in review:
             flags = "；".join(FLAG_ZH.get(flag, flag) for flag in (record.get("flags") or [])) or "置信度低于门槛"
-            lines.append(f"- `{record['file']}`：叶面积 "
-                         f"{record['total_cm2']:.2f} cm²，置信度 {record['confidence']:.2f}；{flags}")
+            area = record.get("total_cm2")
+            area_text = f"{float(area):.2f} cm²" if area is not None else "未测出面积"
+            confidence = record.get("confidence")
+            conf_text = f"{float(confidence):.2f}" if confidence is not None else "-"
+            lines.append(f"- `{record['file']}`：叶面积 {area_text}，置信度 {conf_text}；{flags}")
         lines.append("")
     else:
         lines.append("## 待人工复核\n\n无 —— 全部样本置信度达到自动接受门槛。\n")

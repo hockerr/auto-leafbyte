@@ -44,6 +44,9 @@ class Config:
     hole_validate_background: bool = True
     #: Interior luma below ``hole_dark_ratio * paper luma`` is "tissue, not hole".
     hole_dark_ratio: float = 0.55
+    #: An interior patch whose mean RGB is farther than this (Euclidean, 0-255
+    #: units) from the paper colour is tissue too (yellow/brown necrosis).
+    hole_paper_colour_distance: float = 45.0
     #: Binary closing radius applied to the colour mask (fills veins/speckle).
     mask_closing: int = 2
     #: ExG perturbation used for the stability metric in colour mode.
@@ -124,10 +127,20 @@ class Config:
         data = json.loads(Path(path).read_text(encoding="utf-8"))
         return cls.from_dict(data)
 
+    #: Keys introduced together with the colour segmentation.  A config file that
+    #: has none of them predates that feature, so replaying it must keep the old
+    #: (luma-only) behaviour rather than silently picking up the new defaults.
+    NEW_GENERATION_KEYS = ("leaf_mode", "color_threshold", "color_threshold_range",
+                           "mask_closing", "color_stability_delta")
+    LEGACY_DEFAULTS = {"leaf_mode": "luma", "hole_validate_background": False}
+
     @classmethod
     def from_dict(cls, data: dict) -> "Config":
         fields = {f for f in cls.__dataclass_fields__}
         kwargs = {k: v for k, v in data.items() if k in fields}
+        if not any(key in data for key in cls.NEW_GENERATION_KEYS):
+            for key, legacy in cls.LEGACY_DEFAULTS.items():
+                kwargs.setdefault(key, legacy)
         for key in ("candidate_deltas", "stability_deltas", "dot_thresholds",
                     "color_threshold_range"):
             if key in kwargs:

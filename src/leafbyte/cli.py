@@ -107,6 +107,7 @@ def cmd_apply(args: argparse.Namespace) -> int:
 
     batch.write_results(merged, out_dir)
     batch.write_csv(merged, out_dir / batch.FINAL_CSV, columns=batch.FINAL_COLUMNS)
+    traits_path = batch.write_traits_csv(merged, out_dir)
     final_jsonl = out_dir / batch.FINAL_JSONL
     with open(final_jsonl, "w", encoding="utf-8") as handle:
         for record in merged:
@@ -117,6 +118,7 @@ def cmd_apply(args: argparse.Namespace) -> int:
     _print(f"applied {len(decisions)} decision(s) from {decisions_path.name} (reviewer: {reviewer})")
     _print(f"human-reviewed samples now in results: {done}")
     _print(f"final table: {out_dir / batch.FINAL_CSV}")
+    _print(f"traits table refreshed: {traits_path}")
     _print(f"status: {summary['auto']} auto / {summary['done']} human-accepted / "
            f"{summary['rejected']} rejected / {summary['review']} still awaiting review / "
            f"{summary['failed']} failed")

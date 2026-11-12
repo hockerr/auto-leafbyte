@@ -119,6 +119,7 @@ _HUMAN: dict[str, str] = {
     "scale_invalid_length": "scale length is missing/non-positive",
     "leaf_touches_border": "leaf touches the crop border (area is truncated)",
     "area_unstable": "area unstable under +-threshold",
+    "interior_patches_filled": "interior patches were re-attributed to leaf tissue",
     "weak_threshold_separation": "weak leaf/background separation",
     "competing_leaf": "another large component competes with the leaf",
     "tiny_hole_noise": "consumed area dominated by tiny speckle holes",
@@ -606,6 +607,14 @@ def _gate(record: dict, cfg, metrics: dict,
 
     if _bool(details.get("leaf_border_touch", {}).get("touches")):
         reviewers.append("leaf_touches_border")
+    # Filling interior patches back into the leaf is a segmentation decision; if
+    # it moved a lot of area, a human should confirm it.
+    measure = _measure_dict(record)
+    filled = (_num(measure.get("filled_dark_px")) or 0.0) + (_num(measure.get("filled_pale_px")) or 0.0)
+    total_px = _num(measure.get("total_px")) or 0.0
+    if total_px > 0 and filled / total_px > 0.02:
+        reviewers.append("interior_patches_filled")
+
     tolerance = _stability_tolerance(record, cfg)
     rel_range = _num(details.get("stability", {}).get("rel_range"))
     if rel_range is not None and rel_range > tolerance * STABILITY_REVIEW_FACTOR:

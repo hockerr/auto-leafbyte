@@ -12,7 +12,7 @@
 ```
 leafbyte run   <图片目录>  --scale-cm 17  --out out/      # 自动批处理
 leafbyte review --out out/                                      # 生成人工审核页面
-leafbyte apply out/ --decisions out/review/decisions.json  # 合并人工结论，出最终表
+leafbyte apply --out out/ --decisions out/review/decisions.json  # 合并人工结论，出最终表
 leafbyte report out/                                      # 汇总统计
 ```
 

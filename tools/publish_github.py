@@ -108,7 +108,7 @@ def collect_files(directory: Path) -> list[Path]:
     return files
 
 
-def main(argv: list[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--token", default=os.environ.get("GITHUB_TOKEN"),
                         help="GitHub PAT (default: $GITHUB_TOKEN)")
@@ -117,11 +117,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--branch", default="main")
     parser.add_argument("--description", default="Automatic LeafByte leaf-area measurement with a human-review queue for low-precision samples")
     parser.add_argument("--message", default="Release auto-leafbyte")
-    parser.add_argument("--public", dest="private", action="store_false", default=False,
+    parser.add_argument("--public", dest="private", action="store_false", default=True,
                         help="make the repository public (default: private)")
     parser.add_argument("--replace", action="store_true",
                         help="replace the branch tree entirely (deletes files removed locally)")
     parser.add_argument("--dry-run", action="store_true", help="only list what would be uploaded")
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
     args = parser.parse_args(argv)
 
     directory = Path(args.dir).resolve()

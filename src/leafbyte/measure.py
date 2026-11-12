@@ -177,6 +177,8 @@ def analyze(rect_img, cfg, threshold: float | None = None,
             if take:
                 mask, components, result, used_color, filled_mask = colour
                 mode = "color"
+                if leaf_mode == "auto" and "colour_segmentation" not in result.flags:
+                    result.flags.append("colour_segmentation")
 
     # continuous field for sub-pixel contour tracing (>0 inside the leaf)
     if mode == "color" and used_color is not None:
@@ -231,18 +233,20 @@ def _speckle_only(result: MeasureResult, cfg) -> bool:
 
 
 def _should_use_colour(luma_result, luma_mask, colour_result, colour_mask, cfg) -> bool:
-    """Decide whether the excess-green segmentation explains the photo better.
+    """Decide whether the excess-green segmentation is *required*.
 
-    The luma/white-paper segmentation stays the default (it is what upstream
-    does and what the published reference values were produced with).  Colour is
-    only substituted when it is demonstrably cleaner:
+    The luma/white-paper segmentation stays the default: it is what upstream does
+    and what the published reference values were produced with.  Colour is only
+    substituted when the luma result is demonstrably broken:
 
-    * the luma result is not leaf-like at all (background leaking in, leaf cut
-      off by the crop), or
-    * a second luma component competes with the leaf (>10 % of its size) - the
-      classic symptom of a grey / vignetted background, or
-    * the luma "consumed" area consists only of 1-2 px speckles and the colour
-      segmentation reports a clean leaf with none.
+    * it does not look like a leaf (background leaking in, leaf cut off), or
+    * a second component competes with the leaf (>10 % of its size) - the
+      signature of a grey / vignetted background, or
+    * it is not leaf-like in size at all.
+
+    A white-paper photo with a few JPEG speckle "holes" is **not** enough: the
+    colour threshold can shave pale / yellowish / necrotic tissue off the leaf
+    while still looking confident, so such photos go to review instead.
     """
     if not _is_leaf_like(colour_result, colour_mask):
         return False
@@ -252,8 +256,16 @@ def _should_use_colour(luma_result, luma_mask, colour_result, colour_mask, cfg) 
         return True
     if luma_result.competing_ratio > 0.10:
         return True
-    return _speckle_only(luma_result, cfg) and not _speckle_only(colour_result, cfg) \
-        and colour_result.consumed_px == 0
+    # Narrow, guarded exception: the luma path only saw 1-2 px JPEG speckles as
+    # "holes".  Switching must not change the leaf outline by more than 3 %, so a
+    # yellow / necrotic fringe cannot be shaved off unnoticed.
+    if not (_speckle_only(luma_result, cfg) and not _speckle_only(colour_result, cfg)
+            and colour_result.consumed_px == 0):
+        return False
+    if luma_result.leaf_px <= 0:
+        return False
+    disagreement = abs(colour_result.leaf_px - luma_result.leaf_px) / float(luma_result.leaf_px)
+    return disagreement <= 0.03
 
 
 def _is_leaf_like(result: MeasureResult, mask: np.ndarray) -> bool:
@@ -304,8 +316,11 @@ def _analyse_colour(img, cfg, excluded_mask=None, color_threshold=None):
         else:
             paper_luma = 0.75
         dark_limit = paper_luma * float(getattr(cfg, "hole_dark_ratio", 0.55))
+        paper_saturation = float(np.mean(_saturation_of(paper))) if paper is not None and paper.size else 0.05
+        saturation_limit = float(getattr(cfg, "hole_tissue_saturation", 0.22))
         filled_labels: list[int] = []
-        filled_px = 0
+        dark_filled_px = 0
+        pale_filled_px = 0
         kept: list[dict[str, Any]] = []
         for hole in result.holes:
             label = int(hole["label"])
@@ -313,9 +328,17 @@ def _analyse_colour(img, cfg, excluded_mask=None, color_threshold=None):
             if pix.size == 0:
                 kept.append(hole)
                 continue
-            if float(np.mean(_luma_of(pix))) < dark_limit:
+            luma = float(np.mean(_luma_of(pix)))
+            saturation = float(np.mean(_saturation_of(pix)))
+            # A real eaten hole shows the paper: bright and unsaturated.  Darker
+            # patches are lesions/shadows; pale-but-yellow/brown (saturated)
+            # patches are necrotic tissue.  Both are still lamina -> fill back.
+            if luma < dark_limit:
                 filled_labels.append(label)
-                filled_px += int(hole["area_px"])
+                dark_filled_px += int(hole["area_px"])
+            elif saturation > max(saturation_limit, paper_saturation + 0.12):
+                filled_labels.append(label)
+                pale_filled_px += int(hole["area_px"])
             else:
                 kept.append(hole)
         if filled_labels:
@@ -324,12 +347,17 @@ def _analyse_colour(img, cfg, excluded_mask=None, color_threshold=None):
             components = _ccl.label_components(mask)
             previous_total = result.total_px
             result = compute_results(components, cfg, excluded_mask=excluded_mask)
-            result.flags.append("dark_patches_filled")
+            if dark_filled_px:
+                result.flags.append("dark_patches_filled")
+            if pale_filled_px:
+                result.flags.append("pale_patches_filled")
+            result.stats_filled_px = dark_filled_px + pale_filled_px
+            result.stats_dark_filled_px = dark_filled_px
+            result.stats_pale_filled_px = pale_filled_px
             # total area (leaf + eaten) must not change: tissue was moved from
             # "consumed" into "leaf"
             if result.total_px != previous_total:
                 result.flags.append("filled_area_mismatch")
-            result.stats_filled_px = filled_px
     return mask, components, result, cut, filled_mask
 
 
@@ -542,9 +570,12 @@ def measure_dict(analysis: MeasureAnalysis, include_stats: bool = True) -> dict:
         "flags": list(result.flags),
     }
     out["mode"] = getattr(analysis, "mode", "luma")
-    filled = getattr(result, "stats_filled_px", None)
-    if filled:
-        out["filled_dark_px"] = int(filled)
+    dark = getattr(result, "stats_dark_filled_px", None)
+    if dark:
+        out["filled_dark_px"] = int(dark)
+    pale = getattr(result, "stats_pale_filled_px", None)
+    if pale:
+        out["filled_pale_px"] = int(pale)
     if getattr(analysis, "color_threshold", None) is not None:
         out["color_threshold"] = float(analysis.color_threshold)
     if include_stats:
@@ -597,6 +628,19 @@ def otsu_separation(hist, threshold) -> float:
 # ---------------------------------------------------------------------------
 # private helpers
 # ---------------------------------------------------------------------------
+def _saturation_of(pixels: np.ndarray) -> np.ndarray:
+    """HSV-style saturation ``(max - min) / max`` of an (N, 3) pixel array."""
+    array = np.asarray(pixels, dtype=np.float64)
+    if array.ndim == 1:
+        array = array[None, :]
+    if array.size == 0:
+        return np.zeros(0)
+    highest = array.max(axis=1)
+    lowest = array.min(axis=1)
+    highest[highest <= 0] = 1.0
+    return (highest - lowest) / highest
+
+
 def _luma_of(pixels: np.ndarray) -> np.ndarray:
     """Luma (0..1) of an (N, 3) uint8 array of pixel colours."""
     array = np.asarray(pixels, dtype=np.float64)

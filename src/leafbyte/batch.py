@@ -38,6 +38,7 @@ RUN_JSON = "run.json"
 
 CSV_COLUMNS = [
     "file", "status", "confidence", "total_cm2", "consumed_cm2", "percent_consumed",
+    "leaf_area_cm2", "intact_cm2",
     "threshold", "scale_method", "scale_px_length", "flags", "reason",
 ]
 
@@ -237,6 +238,10 @@ def write_threshold_figure(record: dict[str, Any], out_dir: str | Path, cfg: Con
     label = _sample_label(record["file"])
     size_px = int(mask.shape[0])
     scale_cm = float(getattr(cfg, "scale_cm", 17.0))
+    has_scale = bool((record.get("scale") or {}).get("scale_px_length"))
+    if not has_scale:
+        label = f"{label}（无比例尺）"
+    bar_cm = 5.0 if has_scale else 0.0
     record["figure_contour"] = None
     record["figure_pdf"] = None
     record["figure_plate"] = None
@@ -246,7 +251,7 @@ def write_threshold_figure(record: dict[str, Any], out_dir: str | Path, cfg: Con
                 contours, size=size_px, scale_cm=scale_cm, title=Path(record["file"]).stem,
                 note=(f"auto-leafbyte contour; threshold="
                       f"{getattr(analysis, 'color_threshold', None) or analysis.threshold}"),
-                label=label)
+                label=label, scale_bar_cm=bar_cm)
             svg_path = figure_dir / f"{stem}_contour.svg"
             svg_path.write_text(svg, encoding="utf-8")
             record["figure_contour"] = _relative(svg_path, out_dir)
@@ -263,7 +268,7 @@ def write_threshold_figure(record: dict[str, Any], out_dir: str | Path, cfg: Con
                 record["figure_pdf"] = _relative(pdf_path, out_dir)
 
             plate = vectorize.contour_plate_png(contours, size=size_px, scale_cm=scale_cm,
-                                                label=label)
+                                                label=label, scale_bar_cm=bar_cm)
             _write_jpeg(plate, figure_dir / f"{stem}_plate.jpg", quality_level=88)
             record["figure_plate"] = _relative(figure_dir / f"{stem}_plate.jpg", out_dir)
         except Exception as exc:  # noqa: BLE001
@@ -367,6 +372,8 @@ def analyze_image(path: str | Path, cfg: Config) -> dict[str, Any]:
             except Exception as exc:  # noqa: BLE001 - traits must not break a run
                 record["traits"] = {}
                 record.setdefault("flags", []).append(f"traits failed: {type(exc).__name__}")
+            record["leaf_area_cm2"] = _r((record.get("traits") or {}).get("leaf_area_cm2"))
+            record["intact_cm2"] = _r((record.get("traits") or {}).get("intact_area_cm2"))
             record["segmentation"] = {"mode": mode,
                                       "color_threshold": _r(color_cut) if color_cut is not None else None}
             record["total_cm2"] = _r(total_cm2)

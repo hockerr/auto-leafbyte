@@ -10,6 +10,7 @@
   ],
   "hole_validate_background": true,
   "hole_dark_ratio": 0.55,
+  "hole_paper_colour_distance": 45.0,
   "mask_closing": 2,
   "color_stability_delta": 4.0,
   "color_stability_tolerance": 0.035,

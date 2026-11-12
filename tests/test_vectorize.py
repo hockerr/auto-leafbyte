@@ -47,8 +47,13 @@ class MarchingSquaresTest(unittest.TestCase):
         self.assertEqual(2, len(polygons))
 
     def test_empty_field(self) -> None:
+        # all below the level: nothing is inside -> no contour
         self.assertEqual([], vectorize.marching_squares(np.full((20, 20), -1.0), 0.0))
-        self.assertEqual([], vectorize.marching_squares(np.full((20, 20), 1.0), 0.0))
+        # all above the level: the whole image is inside, so the only boundary is
+        # the (padded) image border - exactly one closed contour hugging the frame
+        contours = vectorize.marching_squares(np.full((20, 20), 1.0), 0.0)
+        self.assertEqual(1, len(contours))
+        self.assertAlmostEqual(20.0 * 20.0, abs(vectorize.polygon_area(contours[0])), delta=45)
 
 
 class SimplifyTest(unittest.TestCase):
@@ -79,16 +84,20 @@ class SVGTest(unittest.TestCase):
         paths = re.findall(r'<path d="([^"]+)"', svg)
         self.assertGreaterEqual(len(paths), 2)  # leaf + hole (each also in the outline group)
 
-        match = re.search(r'data-leaf-area-cm2="([\d.]+)" data-hole-area-cm2="([\d.]+)"', svg)
+        match = re.search(
+            r'data-intact-area-cm2="([\d.]+)" data-hole-area-cm2="([\d.]+)" '
+            r'data-leaf-area-cm2="([\d.]+)"', svg)
         self.assertIsNotNone(match)
-        leaf_cm2, hole_cm2 = float(match.group(1)), float(match.group(2))
+        intact_cm2, hole_cm2, tissue_cm2 = (float(match.group(i)) for i in (1, 2, 3))
         # 200 px == 17 cm  ->  1 px == 0.085 cm
-        expected_leaf = np.pi * 60.0 ** 2 * (17.0 / 200.0) ** 2
+        expected_intact = np.pi * 60.0 ** 2 * (17.0 / 200.0) ** 2
         # marching squares puts vertices on the 0.5-level crossing (half a pixel
         # outside the pixel-centre polygon), so allow a few percent here; the
         # reported area uses the pixel count, not the polygon.
-        self.assertLess(abs(leaf_cm2 - expected_leaf) / expected_leaf, 0.05)
+        self.assertLess(abs(intact_cm2 - expected_intact) / expected_intact, 0.05)
         self.assertGreater(hole_cm2, 0.0)
+        # tissue = intact - holes (holes must not be counted twice)
+        self.assertAlmostEqual(tissue_cm2, intact_cm2 - hole_cm2, places=4)
 
     def test_svg_drops_spurious_specks(self) -> None:
         field = circle_field(200, 60)

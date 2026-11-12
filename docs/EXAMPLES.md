@@ -19,11 +19,12 @@ out/paper/
 ├── leaf_traits.csv           22 个叶片性状（周长/长叶宽/圆度/凸度/叶色…）
 ├── config.json               本次运行的完整配置（可原样重放）
 ├── run.json                  汇总、耗时、与真值的误差统计
-├── calibration.json          置信度门槛标定曲线
-├── FINAL_REPORT.md           人可以读的最终报告（含审核明细）
 ├── overlays/                 可视化叠加图：红=叶片、蓝=孔洞、黄=比例尺四点
-│   ├── CO1_rectified.jpg     （本仓库只为 CO1 / SH2 保留示例图）
-│   └── SH2_rectified.jpg
+│   └── *_rectified.jpg       run 时只为**待审核**样本生成（--overlays all 则每张都有）；
+│                             本仓库只保留 CO1 / SH2 的示例
+├── review/decisions.applied.json   （可选）人工审核后归档的决策文件
+├── calibration.json           （可选）跑 `leafbyte calibrate` 才生成
+└── FINAL_REPORT.md            （可选）`leafbyte report`/人工审核流程产出的可读报告
 ├── figures/                  每张样本 4 个文件（示例只保留 CO1、SH2）
 │   ├── CO1_..._threshold.png  阈值图：矫正图+绿线叶缘 / 掩膜 / 直方图+阈值线
 │   ├── CO1_..._mask.png       全分辨率二值掩膜（面积按它计算）
@@ -43,3 +44,6 @@ python tools/make_summary_table.py --run out/paper --out out/汇总
 ```
 
 得到 `叶片性状汇总.xlsx`（样本数据 / 性状统计 / 说明 三个工作表）和同名 CSV。
+
+> 说明：本仓库的示例 run 只保留了 CO1 / SH2 的图文件，因此 `results.jsonl` 里
+> 其他样本的 `figure_*` 路径指向本地未包含的文件；在你自己的完整 run 里它们都存在。

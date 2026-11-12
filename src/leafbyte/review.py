@@ -587,6 +587,32 @@ def _set_percent_only(record: dict, percent) -> bool:
     return True
 
 
+def _apply_colour_threshold(record: dict, source: dict | None) -> None:
+    """Keep ``segmentation.color_threshold`` in step with the accepted candidate."""
+    if not isinstance(source, dict):
+        return
+    cut = _num(source.get("color_threshold"))
+    if cut is None:
+        return
+    segmentation = record.get("segmentation")
+    if not isinstance(segmentation, dict):
+        segmentation = {}
+        record["segmentation"] = segmentation
+    segmentation["color_threshold"] = _round6(cut)
+
+
+def _refresh_trait_areas(record: dict) -> None:
+    """Area traits follow the final numbers; geometry traits stay from the original run."""
+    trait_values = record.get("traits")
+    total = _num(record.get("total_cm2"))
+    consumed = _num(record.get("consumed_cm2")) or 0.0
+    if not isinstance(trait_values, dict) or total is None:
+        return
+    trait_values["intact_area_cm2"] = _round6(total)
+    trait_values["leaf_area_cm2"] = _round6(max(total - consumed, 0.0))
+    record["traits_stale"] = True
+
+
 def _do_accept(record: dict, decision: dict, summary: dict, file: str) -> bool | None:
     candidate = _match_candidate(
         record, decision.get("threshold"), decision.get("candidate_id")
@@ -632,6 +658,8 @@ def _do_accept(record: dict, decision: dict, summary: dict, file: str) -> bool |
     _set_measurement(record, total, consumed)
     if threshold is not None:
         record["threshold"] = _round6(threshold)
+    _apply_colour_threshold(record, candidate if candidate is not None else decision)
+    _refresh_trait_areas(record)
     return True
 
 
