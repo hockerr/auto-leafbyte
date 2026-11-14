@@ -318,6 +318,7 @@ def _analyse_colour(img, cfg, excluded_mask=None, color_threshold=None):
         dark_limit = paper_luma * float(getattr(cfg, "hole_dark_ratio", 0.55))
         paper_saturation = float(np.mean(_saturation_of(paper))) if paper is not None and paper.size else 0.05
         saturation_limit = float(getattr(cfg, "hole_tissue_saturation", 0.22))
+        saturation_min_px = int(getattr(cfg, "hole_saturation_min_px", 25))
         filled_labels: list[int] = []
         dark_filled_px = 0
         pale_filled_px = 0
@@ -336,7 +337,8 @@ def _analyse_colour(img, cfg, excluded_mask=None, color_threshold=None):
             if luma < dark_limit:
                 filled_labels.append(label)
                 dark_filled_px += int(hole["area_px"])
-            elif saturation > max(saturation_limit, paper_saturation + 0.12):
+            elif (int(hole["area_px"]) >= saturation_min_px
+                  and saturation > max(saturation_limit, paper_saturation + 0.12)):
                 filled_labels.append(label)
                 pale_filled_px += int(hole["area_px"])
             else:

@@ -44,9 +44,11 @@ class Config:
     hole_validate_background: bool = True
     #: Interior luma below ``hole_dark_ratio * paper luma`` is "tissue, not hole".
     hole_dark_ratio: float = 0.55
-    #: An interior patch whose mean RGB is farther than this (Euclidean, 0-255
-    #: units) from the paper colour is tissue too (yellow/brown necrosis).
-    hole_paper_colour_distance: float = 45.0
+    #: A saturated interior patch is tissue too (yellow/brown necrosis).  This
+    #: only applies to patches at least ``hole_saturation_min_px`` big: a 1-2 px
+    #: hole picks up green edge pixels and would look saturated.
+    hole_tissue_saturation: float = 0.22
+    hole_saturation_min_px: int = 25
     #: Binary closing radius applied to the colour mask (fills veins/speckle).
     mask_closing: int = 2
     #: ExG perturbation used for the stability metric in colour mode.

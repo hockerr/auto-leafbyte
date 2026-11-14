@@ -90,7 +90,7 @@ Windows 下也可以直接双击 `run_demo.cmd`（跑论文 30 张 + 生成审�
 我们是矫正原图再二值化，几何上更干净。这个 0.5% 对"百分比被啃食"几乎没影响（两个面积同向变化）。
 如果你们要跟历史 LeafByte 数据严格对齐，可以用 `--threshold` 或加一个全局系数（见 §7 配置）。
 
-审核队列的取舍（`out/paper/calibration.json` 里有完整曲线）：把 `auto_accept_min` 从 0.92 降到 0.85，
+审核队列的取舍（跑 `leafbyte calibrate` 后会在 `out/calibration.json` 里输出完整曲线）：把 `auto_accept_min` 从 0.92 降到 0.85，
 自动接受 26 张，但会多放进来 1 张偏差 2.6% 的样本；提到 0.96 则只剩 20 张自动。**默认 0.92 是"零误收"点。**
 
 ---

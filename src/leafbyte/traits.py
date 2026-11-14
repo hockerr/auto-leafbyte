@@ -112,7 +112,11 @@ def trace_outer_contour(mask: np.ndarray) -> list[int]:
     chain: list[int] = []
     limit = 4 * int(mask.sum()) + 8
     for _ in range(limit):
-        search = (direction + 6) % 8 if direction % 2 == 0 else (direction + 7) % 8
+        # Moore-neighbour tracing: after arriving via ``direction``, start the
+        # clockwise scan two steps counter-clockwise from it.  This must be the
+        # same for axial and diagonal moves; using d+7 for diagonals skipped a
+        # neighbour and inflated the perimeter of jagged / noisy leaf margins.
+        search = (direction + 6) % 8
         for k in range(8):
             nd = (search + k) % 8
             dx, dy = _DIRS[nd]

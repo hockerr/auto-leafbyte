@@ -39,7 +39,7 @@ RUN_JSON = "run.json"
 CSV_COLUMNS = [
     "file", "status", "confidence", "total_cm2", "consumed_cm2", "percent_consumed",
     "leaf_area_cm2", "intact_cm2",
-    "threshold", "scale_method", "scale_px_length", "flags", "reason",
+    "threshold", "scale_method", "scale_px_length", "traits_stale", "flags", "reason",
 ]
 
 #: Final table = results + accuracy vs the published value (when known) + audit trail.
@@ -435,7 +435,8 @@ def analyze_image(path: str | Path, cfg: Config) -> dict[str, Any]:
             result = analysis.result
             record["measure"] = _measure_payload(analysis)
             try:
-                record["traits"] = _traits_payload(analysis, None, cfg)
+                record["traits"] = _traits_payload(analysis, None, cfg,
+                                                   image=record.get("_normalized"))
             except Exception as exc:  # noqa: BLE001
                 record["traits"] = {}
                 record.setdefault("flags", []).append(f"traits failed: {type(exc).__name__}")
@@ -456,7 +457,7 @@ def analyze_image(path: str | Path, cfg: Config) -> dict[str, Any]:
     return record
 
 
-def _traits_payload(analysis, rectified, cfg: Config) -> dict[str, Any]:
+def _traits_payload(analysis, rectified, cfg: Config, image=None) -> dict[str, Any]:
     """Ecological leaf traits (see :mod:`leafbyte.traits`).
 
     Uses the canonical leaf component (not the whole mask, which may hold
@@ -473,12 +474,11 @@ def _traits_payload(analysis, rectified, cfg: Config) -> dict[str, Any]:
     for hole in result.holes:
         hole_mask |= label_map == hole["label"]
     units = None
-    image = None
     if rectified is not None and rectified.scale_px_length:
         units = float(cfg.scale_cm) / float(rectified.scale_px_length)
         image = rectified.image
-    else:
-        image = analysis.mask.astype(np.uint8) * 0 + 0 if False else None
+    # colour traits (GCC / ExG) are unit-free, so they are reported even when no
+    # scale was found: pass the normalised image through in that case
     return traits.compute_traits(leaf_mask, hole_mask, image, units)
 
 
@@ -553,6 +553,9 @@ def build_candidates(record: dict[str, Any], out_dir: str | Path, cfg: Config) -
             if rectified is not None:
                 analysis = measure.analyze(rectified.image, cfg, threshold=threshold,
                                            color_threshold=colour_cut)
+                candidate["mode"] = analysis.mode
+                if analysis.mode != "color":
+                    candidate["color_threshold"] = None
                 total_cm2, consumed_cm2, percent = measure.to_cm2(
                     analysis.result, cfg, rectified.scale_px_length)
                 candidate.update(total_cm2=_r(total_cm2), consumed_cm2=_r(consumed_cm2),

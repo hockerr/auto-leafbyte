@@ -113,7 +113,9 @@ def main(argv: list[str] | None = None) -> int:
         lines.append("## 待人工复核\n")
         for record in review:
             flags = "；".join(FLAG_ZH.get(flag, flag) for flag in (record.get("flags") or [])) or "置信度低于门槛"
-            area = record.get("total_cm2")
+            area = record.get("leaf_area_cm2")
+            if area is None:
+                area = record.get("total_cm2")
             area_text = f"{float(area):.2f} cm²" if area is not None else "未测出面积"
             confidence = record.get("confidence")
             conf_text = f"{float(confidence):.2f}" if confidence is not None else "-"

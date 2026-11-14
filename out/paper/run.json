@@ -1,6 +1,6 @@
 {
   "traits_csv": "out\\paper\\leaf_traits.csv",
-  "generated_at": "2026-11-12T09:31:50",
+  "generated_at": "2026-11-13T07:24:31",
   "image_dir": "data\\paper\\images",
   "out_dir": "out\\paper",
   "config": {
@@ -15,7 +15,8 @@
     ],
     "hole_validate_background": true,
     "hole_dark_ratio": 0.55,
-    "hole_paper_colour_distance": 45.0,
+    "hole_tissue_saturation": 0.22,
+    "hole_saturation_min_px": 25,
     "mask_closing": 2,
     "color_stability_delta": 4.0,
     "color_stability_tolerance": 0.035,
@@ -63,7 +64,7 @@
     "auto_rate": 0.8333,
     "mean_confidence": 0.921,
     "mean_percent_consumed": 6.3197,
-    "total_time_s": 11.06
+    "total_time_s": 11.15
   },
   "accuracy": {
     "compared": 29,
@@ -338,7 +339,7 @@
     "auto_mean_abs_error_total_cm2": 0.121458,
     "auto_max_abs_error_total_cm2": 0.311015
   },
-  "elapsed_s": 16.15,
+  "elapsed_s": 16.34,
   "files": {
     "jsonl": "out\\paper\\results.jsonl",
     "csv": "out\\paper\\results.csv"

@@ -591,6 +591,11 @@ def _apply_colour_threshold(record: dict, source: dict | None) -> None:
     """Keep ``segmentation.color_threshold`` in step with the accepted candidate."""
     if not isinstance(source, dict):
         return
+    mode = source.get("mode")
+    if isinstance(mode, str) and mode and mode != "color":
+        # the candidate was measured with the luma threshold; its
+        # color_threshold is irrelevant and would mislead a re-run
+        return
     cut = _num(source.get("color_threshold"))
     if cut is None:
         return
@@ -608,8 +613,12 @@ def _refresh_trait_areas(record: dict) -> None:
     consumed = _num(record.get("consumed_cm2")) or 0.0
     if not isinstance(trait_values, dict) or total is None:
         return
+    leaf_area = _round6(max(total - consumed, 0.0))
     trait_values["intact_area_cm2"] = _round6(total)
-    trait_values["leaf_area_cm2"] = _round6(max(total - consumed, 0.0))
+    trait_values["leaf_area_cm2"] = leaf_area
+    # the flat CSV columns read the record top level, not the traits dict
+    record["intact_cm2"] = _round6(total)
+    record["leaf_area_cm2"] = leaf_area
     record["traits_stale"] = True
 
 
@@ -650,6 +659,7 @@ def _do_accept(record: dict, decision: dict, summary: dict, file: str) -> bool |
             return None
         if threshold is not None:
             record["threshold"] = _round6(threshold)
+        _refresh_trait_areas(record)
         return True
     numbers = _validated_numbers(total, consumed, record, summary, file, "accept")
     if numbers is None:
@@ -672,6 +682,7 @@ def _do_override(record: dict, decision: dict, summary: dict, file: str) -> bool
         threshold = _num(decision.get("threshold"))
         if threshold is not None:
             record["threshold"] = _round6(threshold)
+        _apply_colour_threshold(record, decision)
         return True
     numbers = _validated_numbers(
         total, decision.get("consumed_cm2"), record, summary, file, "override"
@@ -683,6 +694,8 @@ def _do_override(record: dict, decision: dict, summary: dict, file: str) -> bool
     threshold = _num(decision.get("threshold"))
     if threshold is not None:
         record["threshold"] = _round6(threshold)
+    _apply_colour_threshold(record, decision)
+    _refresh_trait_areas(record)
     return True
 
 
